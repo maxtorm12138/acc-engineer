@@ -1,7 +1,7 @@
 #ifndef ACC_ENGINEER_UI_DRIVER_INPUT_H
 #define ACC_ENGINEER_UI_DRIVER_INPUT_H
 #include <QWidget>
-
+#include <QChart>
 #include "shared_memory_emitter.h"
 
 namespace Ui {
@@ -9,13 +9,13 @@ class DriverInput;
 }
 
 namespace acc_engineer::ui {
+class gas_chart;
+
 class driver_input final : public QWidget
 {
     Q_OBJECT
 public:
-    explicit driver_input(QWidget *parent = nullptr);
-
-signals:
+    explicit driver_input(gas_chart *gas_char, QWidget *parent = nullptr);
 
 public slots:
     void handle_new_frame(frame frame);

@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>DriverInput</string>
   </property>
   <property name="styleSheet">
    <string notr="true">font-size: 16px
@@ -85,7 +85,7 @@
                   </sizepolicy>
                  </property>
                  <property name="value">
-                  <number>10</number>
+                  <number>0</number>
                  </property>
                  <property name="alignment">
                   <set>Qt::AlignJustify|Qt::AlignTop</set>
@@ -141,7 +141,7 @@
                   </sizepolicy>
                  </property>
                  <property name="value">
-                  <number>10</number>
+                  <number>0</number>
                  </property>
                  <property name="alignment">
                   <set>Qt::AlignJustify|Qt::AlignTop</set>
@@ -246,6 +246,9 @@
            <property name="text">
             <string>Not Driving</string>
            </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
           </widget>
          </item>
          <item row="1" column="0">
@@ -270,7 +273,10 @@
             </sizepolicy>
            </property>
            <property name="text">
-            <string>NotDriving</string>
+            <string>Not Driving</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
            </property>
           </widget>
          </item>

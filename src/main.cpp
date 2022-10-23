@@ -10,6 +10,7 @@
 #include "ui/shared_memory_emitter.h"
 #include "ui/main_window.h"
 #include "ui/driver_input.h"
+#include "ui/gas_chart.h"
 
 std::atomic running{true};
 
@@ -74,11 +75,14 @@ int main(int argc, char *argv[])
 
     auto shared_memory = std::make_shared<acc_engineer::shared_memory::shared_memory>();
     auto shared_memory_emitter = std::make_shared<acc_engineer::ui::shared_memory_emitter>();
-    auto main_window = std::make_shared<acc_engineer::ui::main_window>();
-    auto driver_input = std::make_shared<acc_engineer::ui::driver_input>();
+
+    auto main_window = new acc_engineer::ui::main_window;
+    auto gas_chart = new acc_engineer::ui::gas_chart;
+    auto driver_input = new acc_engineer::ui::driver_input(gas_chart);
 
     std::thread shared_memory_thread(shared_memory_main, shared_memory, shared_memory_emitter);
-    QObject::connect(shared_memory_emitter.get(), &acc_engineer::ui::shared_memory_emitter::new_frame, driver_input.get(), &acc_engineer::ui::driver_input::handle_new_frame);
+    QObject::connect(shared_memory_emitter.get(), &acc_engineer::ui::shared_memory_emitter::new_frame, driver_input, &acc_engineer::ui::driver_input::handle_new_frame);
+    QObject::connect(shared_memory_emitter.get(), &acc_engineer::ui::shared_memory_emitter::new_frame, gas_chart, &acc_engineer::ui::gas_chart::handle_new_frame);
     // std::thread net_main_thread(net_main, argc, argv);
 
     main_window->show();

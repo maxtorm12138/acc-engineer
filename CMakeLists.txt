@@ -52,6 +52,8 @@ target_include_directories(acc-engineer-shared-memory PRIVATE src/)
 target_link_libraries(acc-engineer-shared-memory spdlog::spdlog)
 
 set(ACC_ENGINEER_UI_SRCS
+    src/ui/gas_chart.cpp
+    src/ui/gas_chart.h
     src/ui/driver_input.cpp
     src/ui/driver_input.h
     src/ui/shared_memory_emitter.cpp

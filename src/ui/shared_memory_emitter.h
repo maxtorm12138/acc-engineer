@@ -8,11 +8,13 @@ namespace acc_engineer::ui {
 
 struct frame
 {
-    float gas;
-    float throttle;
+    int percent_gas;
+    int percent_throttle;
+    int gear;
+    int speed;
 };
 
-class shared_memory_emitter : public QObject
+class shared_memory_emitter final : public QObject
 {
     Q_OBJECT
 public:
