@@ -1,5 +1,5 @@
-#ifndef ACC_ENGINEER_SHARED_MEMORY_READER_H
-#define ACC_ENGINEER_SHARED_MEMORY_READER_H
+#ifndef ACC_ENGINEER_SHARED_MEMORY_SHARED_MEMORY_H
+#define ACC_ENGINEER_SHARED_MEMORY_SHARED_MEMORY_H
 
 #include <boost/noncopyable.hpp>
 #include <boost/interprocess/windows_shared_memory.hpp>
@@ -8,16 +8,14 @@
 
 #include "defines.h"
 namespace acc_engineer::shared_memory {
-class reader : public boost::noncopyable
+class shared_memory : public boost::noncopyable
 {
 public:
-    reader();
+    shared_memory();
 
-    [[nodiscard]] page_file_physics read_physics() const;
-    [[nodiscard]] page_file_graphic read_graphic() const;
-    [[nodiscard]] page_file_static read_static() const;
+    [[nodiscard]] bool driving() const;
 
-    [[nodiscard]] std::tuple<page_file_physics, page_file_graphic, page_file_static> read() const;
+    [[nodiscard]] std::tuple<page_file_physics, page_file_graphic, page_file_static> frame() const;
 
 private:
     boost::interprocess::windows_shared_memory physics_memory_;

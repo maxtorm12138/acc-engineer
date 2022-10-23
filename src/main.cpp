@@ -6,9 +6,10 @@
 
 #include <spdlog/spdlog.h>
 
-#include "shared_memory/reader.h"
-
+#include "shared_memory/shared_memory.h"
+#include "ui/shared_memory_emitter.h"
 #include "ui/main_window.h"
+#include "ui/driver_input.h"
 
 std::atomic running{true};
 
@@ -39,47 +40,54 @@ int net_main(int argc, char *argv[])
     return 0;
 }
 
-void shared_memory_main()
+int shared_memory_main(std::shared_ptr<acc_engineer::shared_memory::shared_memory> memory, std::shared_ptr<acc_engineer::ui::shared_memory_emitter> emitter)
 {
     try
     {
         using namespace std::chrono_literals;
-        acc_engineer::shared_memory::reader reader;
         std::chrono::milliseconds sleep_ms(10);
         while (running)
         {
             std::this_thread::sleep_for(sleep_ms);
-            auto [physics_content, graphic_content, static_content] = reader.read();
-            if (graphic_content.session != acc_engineer::shared_memory::acc_session_type::unknown)
+            if (!memory->driving())
             {
-                sleep_ms = 10ms;
-            }
-            else
-            {
-                spdlog::debug("user not driving sleep 2s");
                 sleep_ms = 2s;
+                SPDLOG_DEBUG("user not driving, sleep 2s");
+                continue;
             }
+            sleep_ms = 15ms;
+            auto [physics_content, graphic_content, static_content] = memory->frame();
+            emitter->consume(physics_content, graphic_content, static_content);
         }
     }
     catch (const std::exception &ex)
     {
-        std::cerr << "shared memory exception: " << ex.what() << std::endl;
+        SPDLOG_ERROR("shared memory main exception: {}", ex.what());
     }
+    return 0;
 }
 
 int main(int argc, char *argv[])
 {
     spdlog::set_level(spdlog::level::trace);
     QApplication app(argc, argv);
-    std::thread net_main_thread(net_main, argc, argv);
-    std::thread shared_memory_thread(shared_memory_main);
 
-    acc_engineer::ui::main_window main_window;
-    main_window.show();
+    auto shared_memory = std::make_shared<acc_engineer::shared_memory::shared_memory>();
+    auto shared_memory_emitter = std::make_shared<acc_engineer::ui::shared_memory_emitter>();
+    auto main_window = std::make_shared<acc_engineer::ui::main_window>();
+    auto driver_input = std::make_shared<acc_engineer::ui::driver_input>();
+
+    std::thread shared_memory_thread(shared_memory_main, shared_memory, shared_memory_emitter);
+    QObject::connect(shared_memory_emitter.get(), &acc_engineer::ui::shared_memory_emitter::new_frame, driver_input.get(), &acc_engineer::ui::driver_input::handle_new_frame);
+    // std::thread net_main_thread(net_main, argc, argv);
+
+    main_window->show();
+    driver_input->show();
 
     const int ret = app.exec(); // NOLINT(readability-static-accessed-through-instance)
     running = false;
-    net_main_thread.join();
+    // net_main_thread.join();
+
     shared_memory_thread.join();
     return ret;
 }

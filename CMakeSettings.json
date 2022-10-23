@@ -20,8 +20,7 @@
       "cmakeCommandArgs": "-DBOOST_ROOT=E:\\Library_Release -DCMAKE_PREFIX_PATH=E:\\Library_Release;C:\\Qt\\6.4.0\\msvc2019_64",
       "buildCommandArgs": "",
       "ctestCommandArgs": "",
-      "inheritEnvironments": [ "msvc_x64_x64" ],
-      "variables": []
+      "inheritEnvironments": [ "msvc_x64_x64" ]
     }
   ]
 }

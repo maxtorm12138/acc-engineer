@@ -2,21 +2,28 @@
 #define ACC_ENGINEER_UI_DRIVER_INPUT_H
 #include <QWidget>
 
-namespace Ui
-{
-	class DriverInput;
+#include "shared_memory_emitter.h"
+
+namespace Ui {
+class DriverInput;
 }
 
-namespace acc_engineer::ui
+namespace acc_engineer::ui {
+class driver_input final : public QWidget
 {
-	class driver_input final : public QWidget
-	{
-		Q_OBJECT
-	public:
-		explicit driver_input(QWidget* parent = nullptr);
-	private:
-		Ui::DriverInput* ui_;
-	};
-}
+    Q_OBJECT
+public:
+    explicit driver_input(QWidget *parent = nullptr);
+
+signals:
+
+public slots:
+    void handle_new_frame(frame frame);
+
+private:
+    Ui::DriverInput *ui_;
+};
+
+} // namespace acc_engineer::ui
 
 #endif
