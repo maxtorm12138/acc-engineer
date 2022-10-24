@@ -52,8 +52,8 @@ target_include_directories(acc-engineer-shared-memory PRIVATE src/)
 target_link_libraries(acc-engineer-shared-memory spdlog::spdlog)
 
 set(ACC_ENGINEER_UI_SRCS
-    src/ui/gas_chart.cpp
-    src/ui/gas_chart.h
+    src/ui/gas_throttle_chart.cpp
+    src/ui/gas_throttle_chart.h
     src/ui/driver_input.cpp
     src/ui/driver_input.h
     src/ui/shared_memory_emitter.cpp
@@ -66,12 +66,12 @@ set(ACC_ENGINEER_SRCS
     ${ACC_ENGINEER_UI_SRCS}
     )
 
-
+message("${CMAKE_BUILD_TYPE}")
 if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     add_executable(acc-engineer src/main.cpp ${ACC_ENGINEER_SRCS})
     target_compile_definitions(acc-engineer PRIVATE SPDLOG_ACTIVE_LEVEL=0)
-elseif ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-        add_executable(acc-engineer WIN32 src/main.cpp ${ACC_ENGINEER_SRCS})
+else()
+    add_executable(acc-engineer WIN32 src/main.cpp ${ACC_ENGINEER_SRCS})
 endif ()
 
 target_link_libraries(acc-engineer acc-engineer-shared-memory)

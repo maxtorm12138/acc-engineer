@@ -4,20 +4,19 @@
 
 #include "ui_driverinput.h"
 
-#include "gas_chart.h"
+#include "gas_throttle_chart.h"
 
 namespace acc_engineer::ui {
-driver_input::driver_input(gas_chart *gas_chart, QWidget *parent)
+driver_input::driver_input(gas_throttle_chart *gas_throttle_chart, QWidget *parent)
     : QWidget(parent)
     , ui_(new Ui::DriverInput)
 {
     ui_->setupUi(this);
-    ui_->GasChart->setChart(gas_chart);
+    ui_->GasChart->setChart(gas_throttle_chart);
 }
 
 void driver_input::handle_new_frame(frame frame)
 {
-    SPDLOG_DEBUG("new frame");
     ui_->GasProgressBar->setValue(frame.percent_gas);
     ui_->ThrottleProgressBar->setValue(frame.percent_throttle);
     ui_->SpeedLabel->setText(QString("%1 km/h").arg(frame.speed));

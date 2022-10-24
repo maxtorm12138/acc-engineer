@@ -10,7 +10,7 @@
 #include "ui/shared_memory_emitter.h"
 #include "ui/main_window.h"
 #include "ui/driver_input.h"
-#include "ui/gas_chart.h"
+#include "ui/gas_throttle_chart.h"
 
 std::atomic running{true};
 
@@ -56,7 +56,7 @@ int shared_memory_main(std::shared_ptr<acc_engineer::shared_memory::shared_memor
                 SPDLOG_DEBUG("user not driving, sleep 2s");
                 continue;
             }
-            sleep_ms = 15ms;
+            sleep_ms = 33ms;
             auto [physics_content, graphic_content, static_content] = memory->frame();
             emitter->consume(physics_content, graphic_content, static_content);
         }
@@ -77,12 +77,12 @@ int main(int argc, char *argv[])
     auto shared_memory_emitter = std::make_shared<acc_engineer::ui::shared_memory_emitter>();
 
     auto main_window = new acc_engineer::ui::main_window;
-    auto gas_chart = new acc_engineer::ui::gas_chart;
+    auto gas_chart = new acc_engineer::ui::gas_throttle_chart;
     auto driver_input = new acc_engineer::ui::driver_input(gas_chart);
 
     std::thread shared_memory_thread(shared_memory_main, shared_memory, shared_memory_emitter);
     QObject::connect(shared_memory_emitter.get(), &acc_engineer::ui::shared_memory_emitter::new_frame, driver_input, &acc_engineer::ui::driver_input::handle_new_frame);
-    QObject::connect(shared_memory_emitter.get(), &acc_engineer::ui::shared_memory_emitter::new_frame, gas_chart, &acc_engineer::ui::gas_chart::handle_new_frame);
+    QObject::connect(shared_memory_emitter.get(), &acc_engineer::ui::shared_memory_emitter::new_frame, gas_chart, &acc_engineer::ui::gas_throttle_chart::handle_new_frame);
     // std::thread net_main_thread(net_main, argc, argv);
 
     main_window->show();
