@@ -4,24 +4,31 @@
 #include <QObject>
 #include "shared_memory/defines.h"
 
-namespace acc_engineer::ui {
-
-struct frame
+namespace acc_engineer::ui
 {
-    int percent_gas;
-    int percent_throttle;
-    int gear;
-    int speed;
-};
+	struct frame
+	{
+		int percent_gas;
+		int percent_throttle;
+		int gear;
+		QString gear_display;
+		int speed;
+	};
 
-class shared_memory_emitter final : public QObject
-{
-    Q_OBJECT
-public:
-    void consume(shared_memory::page_file_physics &physics_content, shared_memory::page_file_graphic &graphics_content, shared_memory::page_file_static &static_content);
-signals:
-    void new_frame(frame frame);
-};
+	class shared_memory_emitter final : public QObject
+	{
+		Q_OBJECT
+	public:
+		void consume(shared_memory::page_file_physics& physics_content,
+		             shared_memory::page_file_graphic& graphics_content,
+		             shared_memory::page_file_static& static_content);
+
+	private:
+		QString format_gear(int gear);
+
+	signals:
+		void new_frame(frame frame);
+	};
 } // namespace acc_engineer::ui
 
 #endif
