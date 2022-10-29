@@ -43,9 +43,9 @@ endfunction()
 
  set(ACC_ENGINEER_SHARED_MEMORY_SRCS
     src/shared_memory/defines.h
-    src/shared_memory/shared_memory.h
-    src/shared_memory/shared_memory_emitter.h
-    src/shared_memory/shared_memory.cpp)
+    src/shared_memory/reader.h
+    src/shared_memory/emitter.h
+    src/shared_memory/reader.cpp)
 
 add_library(acc-engineer-shared-memory ${ACC_ENGINEER_SHARED_MEMORY_SRCS})
 target_link_libraries(acc-engineer-shared-memory Boost::boost)
