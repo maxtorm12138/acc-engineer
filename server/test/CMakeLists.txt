@@ -1,0 +1,22 @@
+function(ADD_ACC_ENGINEER_TEST)
+    cmake_parse_arguments(ACC_ENGINEER_TEST "" "NAME" "FILES" ${ARGN})
+    add_executable(${ACC_ENGINEER_TEST_NAME} ${ACC_ENGINEER_TEST_FILES})
+    target_include_directories(${ACC_ENGINEER_TEST_NAME} PRIVATE ${ACC_ENGINEER_PROTO_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/src)
+    target_compile_definitions(${ACC_ENGINEER_TEST_NAME} PRIVATE BOOST_ASIO_NO_DEPRECATED)
+    target_link_libraries(${ACC_ENGINEER_TEST_NAME} PRIVATE acc-engineer-server-rpc)
+    target_link_libraries(${ACC_ENGINEER_TEST_NAME} PRIVATE Boost::boost Boost::program_options)
+    target_link_libraries(${ACC_ENGINEER_TEST_NAME} PRIVATE protobuf::libprotobuf)
+    target_link_libraries(${ACC_ENGINEER_TEST_NAME} PRIVATE spdlog::spdlog)
+
+    if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+        target_compile_definitions(${ACC_ENGINEER_TEST_NAME} PRIVATE SPDLOG_ACTIVE_LEVEL=0)
+    endif ()
+
+    if (MSVC)
+        target_compile_definitions(${ACC_ENGINEER_TEST_NAME} PRIVATE _WIN32_WINNT=0x0A00)
+        target_compile_options(${ACC_ENGINEER_TEST_NAME} PRIVATE /bigobj)
+    endif ()
+endfunction()
+
+ADD_ACC_ENGINEER_TEST(NAME test_rpc FILES test_rpc.cpp ${SERVICE_PROTO_FILES})
+ADD_ACC_ENGINEER_TEST(NAME test_dynamic_parallel_group FILES test_dynamic_parallel_group.cpp ${SERVICE_PROTO_FILES})
