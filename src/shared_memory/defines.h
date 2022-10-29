@@ -1,6 +1,7 @@
 #ifndef ACC_ENGINEER_SHARED_MEMORY_DEFINES_H
 #define ACC_ENGINEER_SHARED_MEMORY_DEFINES_H
 
+#include <cstdint>
 namespace acc_engineer::shared_memory {
 
 constexpr std::string_view physics_page_file_path = "Local\\acpmf_physics";
@@ -98,8 +99,12 @@ enum class acc_rain_intensity : int
     thunderstorm = 5,
 };
 
+#pragma pack(push)
+#pragma pack(4)
+
 struct frame
 {
+    uint64_t tick;
     float gas;
     float brake;
     float fuel;
@@ -107,11 +112,13 @@ struct frame
     float speed_kmh;
     int gear;
     acc_status status;
-    int is_engine_running;
+    int abs;
+    int tc;
+    int tc2;
+    float abs_in_action;
+    float tc_in_action;
+    int engine_map;
 };
-
-#pragma pack(push)
-#pragma pack(4)
 
 struct page_file_physics
 {

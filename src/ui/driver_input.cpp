@@ -6,7 +6,6 @@
 // QWT
 #include <qwt_plot_opengl_canvas.h>
 #include <QwtPlotCurve>
-#include <QwtPlotDirectPainter>
 #include <QwtCPointerData>
 
 // ui
@@ -22,22 +21,23 @@ driver_input::driver_input(QWidget *parent)
 
     for (int i = 0; i < driver_input_dots; i++)
     {
-        gas_sample_.x_view[i] = i;
-        gas_sample_.x_buffer.push_back(i);
-
         throttle_sample_.x_view[i] = i;
         throttle_sample_.x_buffer.push_back(i);
 
+        brake_sample_.x_view[i] = i;
+        brake_sample_.x_buffer.push_back(i);
+
         speed_sample_.x_view[i] = i;
         speed_sample_.x_buffer.push_back(i);
+
+        steering_sample_.x_view[i] = i;
+        steering_sample_.x_buffer.push_back(i);
     }
 
-    init_gas_and_throttle_plot();
+    init_throttle_plot();
+    init_brake_plot();
     init_speed_plot();
     init_steering_plot();
-
-    ui_->GasAndThrottlePlot->replot();
-    ui_->SpeedPlot->replot();
 }
 
 driver_input::~driver_input()
@@ -49,57 +49,99 @@ void driver_input::handle_new_frame(shared_memory::frame frame)
 {
     const float percent_gas = frame.gas * 100;
     const float percent_brake = frame.brake * 100;
+    const float abs_in_action = frame.abs_in_action * 100;
+    const float tc_in_action = frame.tc_in_action * 100;
 
-    ui_->GasProgressBar->setValue(static_cast<int>(percent_gas));
-    ui_->ThrottleProgressBar->setValue(static_cast<int>(percent_brake));
+    ui_->ThrottleProgressBar->setFormat("%p%");
+    ui_->ThrottleProgressBar->setValue(static_cast<int>(percent_gas));
+
+    ui_->TCInActionProgressBar->setFormat("%p%");
+    ui_->TCInActionProgressBar->setValue(static_cast<int>(tc_in_action));
+
+    ui_->BrakeProgressBar->setFormat("%p%");
+    ui_->BrakeProgressBar->setValue(static_cast<int>(percent_brake));
+
+    ui_->ABSInActionProgressBar->setFormat("%p%");
+    ui_->ABSInActionProgressBar->setValue(static_cast<int>(abs_in_action));
+
+    //ui_->SteeringProgressBar->setFormat("%p%");
+    //ui_->SteeringProgressBar->setValue(static_cast<int>(steering_degree));
+
     ui_->GearLabel->setText(format_gear(frame.gear));
-    ui_->SpeedLabel->setText(QString("%1").arg(frame.speed_kmh));
+    ui_->SpeedLabel->setText(QString("%1").arg(frame.speed_kmh, 3, 'f', 0));
+    ui_->ABSLabel->setText(QString("%1").arg(frame.abs));
+    ui_->TCLabel->setText(QString("%1").arg(frame.tc));
+    ui_->TC2Label->setText(QString("%1").arg(frame.tc2));
+    ui_->EngineMapLabel->setText(QString("%1").arg(frame.engine_map));
+    ui_->FuelLabel->setText(QString("%1").arg(frame.fuel, 3, 'f', 2));
 
-    const float frame_x = frame_count_;
+    const float tick = frame.tick + driver_input_dots;
 
-    gas_sample_.x_buffer.push_back(frame_x);
-    throttle_sample_.x_buffer.push_back(frame_x);
-    speed_sample_.x_buffer.push_back(frame_x);
+    throttle_sample_.x_buffer.push_back(tick);
+    brake_sample_.x_buffer.push_back(tick);
+    speed_sample_.x_buffer.push_back(tick);
+    //steering_sample_.x_buffer.push_back(tick);
 
-    gas_sample_.y_buffer.push_back(percent_gas);
-    throttle_sample_.y_buffer.push_back(percent_brake);
+    throttle_sample_.y_buffer.push_back(percent_gas);
+    brake_sample_.y_buffer.push_back(percent_brake);
     speed_sample_.y_buffer.push_back(frame.speed_kmh);
+    //steering_sample_.y_buffer.push_back(steering_degree);
 
-    gas_sample_.buffer_to_view();
     throttle_sample_.buffer_to_view();
+    brake_sample_.buffer_to_view();
     speed_sample_.buffer_to_view();
+    steering_sample_.buffer_to_view();
 
-    ui_->GasAndThrottlePlot->setAxisScale(QwtAxis::XBottom, frame_x - 995, frame_x + 5, driver_input_dots);
-    ui_->SpeedPlot->setAxisScale(QwtAxis::XBottom, frame_x - 995, frame_x + 5, driver_input_dots);
+    ui_->ThrottlePlot->setAxisScale(QwtAxis::XBottom,  tick- 995,  tick+ 5, driver_input_dots);
+    ui_->BrakePlot->setAxisScale(QwtAxis::XBottom,  tick- 995,  tick+ 5, driver_input_dots);
+    ui_->SpeedPlot->setAxisScale(QwtAxis::XBottom,  tick- 995,  tick+ 5, driver_input_dots);
+    //ui_->SteeringPlot->setAxisScale(QwtAxis::XBottom,  tick- 995,  tick+ 5, driver_input_dots);
 
-    ui_->GasAndThrottlePlot->replot();
+    ui_->ThrottlePlot->replot();
+    ui_->BrakePlot->replot();
     ui_->SpeedPlot->replot();
-
-    frame_count_++;
+    //ui_->SteeringPlot->replot();
 }
 
-void driver_input::init_gas_and_throttle_plot()
+void driver_input::init_throttle_plot()
 {
-    gas_curve_ = new QwtPlotCurve(tr("Gas %", "DriverInput.Title.Curve.Gas"));
     throttle_curve_ = new QwtPlotCurve(tr("Throttle %", "DriverInput.Title.Curve.Throttle"));
-    gas_and_throttle_painter_ = new QwtPlotDirectPainter(ui_->GasAndThrottlePlot);
 
-    ui_->GasAndThrottlePlot->setCanvas(new QwtPlotOpenGLCanvas);
-    ui_->GasAndThrottlePlot->setTitle(tr("Gas And Throttle", "DriverInput.Title.Plot.GasAndThrottle"));
-    ui_->GasAndThrottlePlot->setAutoReplot(false);
+    ui_->ThrottlePlot->setCanvas(new QwtPlotOpenGLCanvas);
+    ui_->ThrottlePlot->setTitle(tr("Throttle", "DriverInput.Title.Plot.Throttle"));
+    ui_->ThrottlePlot->setAutoReplot(false);
 
-    ui_->GasAndThrottlePlot->setAxisScale(QwtAxis::YLeft, 0, 100);
-    ui_->GasAndThrottlePlot->setAxisScale(QwtAxis::XBottom, 0, driver_input_dots, driver_input_dots);
-    ui_->GasAndThrottlePlot->setAxisVisible(QwtAxis::XBottom, false);
+    ui_->ThrottlePlot->setAxisScale(QwtAxis::YLeft, 0, 100);
+    ui_->ThrottlePlot->setAxisScale(QwtAxis::XBottom, 0, driver_input_dots, driver_input_dots);
+    ui_->ThrottlePlot->setAxisVisible(QwtAxis::XBottom, false);
 
-    gas_curve_->setPen(Qt::red, 3);
-    throttle_curve_->setPen(Qt::blue, 3);
+    throttle_curve_->setPen(Qt::green, 3);
+    throttle_curve_->attach(ui_->ThrottlePlot);
 
-    gas_curve_->attach(ui_->GasAndThrottlePlot);
-    throttle_curve_->attach(ui_->GasAndThrottlePlot);
+    throttle_curve_->setData(new QwtCPointerData(throttle_sample_.x_view.data(), throttle_sample_.y_view.data(), driver_input_dots));
 
-    gas_curve_->setData(new QwtCPointerData<float>(gas_sample_.x_view.data(), gas_sample_.y_view.data(), driver_input_dots));
-    throttle_curve_->setData(new QwtCPointerData<float>(throttle_sample_.x_view.data(), throttle_sample_.y_view.data(), driver_input_dots));
+    ui_->ThrottlePlot->replot();
+}
+
+void driver_input::init_brake_plot()
+{
+    brake_curve_ = new QwtPlotCurve(tr("Brake %", "DriverInput.Title.Curve.Brake"));
+
+    ui_->BrakePlot->setCanvas(new QwtPlotOpenGLCanvas);
+    ui_->BrakePlot->setTitle(tr("Brake", "DriverInput.Title.Plot.Brake"));
+    ui_->BrakePlot->setAutoReplot(false);
+
+    ui_->BrakePlot->setAxisScale(QwtAxis::YLeft, 0, 100);
+    ui_->BrakePlot->setAxisScale(QwtAxis::XBottom, 0, driver_input_dots, driver_input_dots);
+    ui_->BrakePlot->setAxisVisible(QwtAxis::XBottom, false);
+
+    brake_curve_->setPen(Qt::red, 3);
+
+    brake_curve_->attach(ui_->BrakePlot);
+
+    brake_curve_->setData(new QwtCPointerData(brake_sample_.x_view.data(), brake_sample_.y_view.data(), driver_input_dots));
+
+    ui_->BrakePlot->replot();
 }
 
 void driver_input::init_speed_plot()
@@ -114,12 +156,12 @@ void driver_input::init_speed_plot()
     ui_->SpeedPlot->setAxisScale(QwtAxis::XBottom, 0, driver_input_dots, driver_input_dots);
     ui_->SpeedPlot->setAxisVisible(QwtAxis::XBottom, false);
 
-    speed_painter_ = new QwtPlotDirectPainter(ui_->SpeedPlot);
-
     speed_curve_->setPen(Qt::yellow, 3);
     speed_curve_->attach(ui_->SpeedPlot);
 
     speed_curve_->setData(new QwtCPointerData(speed_sample_.x_view.data(), speed_sample_.y_view.data(), driver_input_dots));
+
+    ui_->SpeedPlot->replot();
 }
 
 void driver_input::init_steering_plot()
@@ -130,9 +172,16 @@ void driver_input::init_steering_plot()
     ui_->SteeringPlot->setTitle(tr("Steering", "DriverInput.Title.Plot.Steering"));
     ui_->SteeringPlot->setAutoReplot(false);
 
+    ui_->SteeringPlot->setAxisAutoScale(QwtAxis::YLeft);
+    ui_->SteeringPlot->setAxisScale(QwtAxis::XBottom, 0, driver_input_dots, driver_input_dots);
     ui_->SteeringPlot->setAxisVisible(QwtAxis::XBottom, false);
+	
+    steering_curve_->setPen(Qt::darkYellow, 3);
+    steering_curve_->attach(ui_->SteeringPlot);
 
-    steering_painter_ = new QwtPlotDirectPainter(ui_->SteeringPlot);
+    steering_curve_->setData(new QwtCPointerData(steering_sample_.x_view.data(), steering_sample_.y_view.data(), driver_input_dots));
+
+    ui_->SteeringPlot->replot();
 }
 
 QString driver_input::format_gear(int gear)

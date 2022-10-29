@@ -8,14 +8,12 @@
 
 #include "defines.h"
 namespace acc_engineer::shared_memory {
-class shared_memory : public boost::noncopyable
+class reader : public boost::noncopyable
 {
 public:
-    shared_memory();
+    reader();
 
-    [[nodiscard]] frame snapshot() const;
-
-    [[nodiscard]] static bool driving(const frame &frame);
+    [[nodiscard]] frame snapshot();
 
 private:
     boost::interprocess::windows_shared_memory physics_memory_;
@@ -27,6 +25,7 @@ private:
     boost::interprocess::windows_shared_memory static_memory_;
     boost::interprocess::mapped_region static_region_;
     page_file_static *static_content_;
+    uint64_t tick_;
 };
 
 } // namespace acc_engineer::shared_memory
