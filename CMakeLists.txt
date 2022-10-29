@@ -44,6 +44,8 @@ endfunction()
  set(ACC_ENGINEER_SHARED_MEMORY_SRCS
     src/shared_memory/defines.h
     src/shared_memory/reader.h
+    src/shared_memory/tools.h
+    src/shared_memory/car_spec.h
     src/shared_memory/emitter.h
     src/shared_memory/reader.cpp)
 
@@ -86,3 +88,4 @@ target_include_directories(acc-engineer PRIVATE src/)
 target_include_directories(acc-engineer PRIVATE "E:/Qwt-6.2.0/include")
 target_compile_definitions(acc-engineer PRIVATE BOOST_ASIO_NO_DEPRECATED)
 
+add_subdirectory(acc-engineer-server)

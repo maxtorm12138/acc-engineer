@@ -2,6 +2,8 @@
 #define ACC_ENGINEER_SHARED_MEMORY_DEFINES_H
 
 #include <cstdint>
+#include <string_view>
+
 namespace acc_engineer::shared_memory {
 
 constexpr std::string_view physics_page_file_path = "Local\\acpmf_physics";
@@ -97,6 +99,14 @@ enum class acc_rain_intensity : int
     medium_rain = 3,
     heavy_rain = 4,
     thunderstorm = 5,
+};
+
+struct car_spec
+{
+    std::string_view kunuos_id;
+    std::string_view name;
+    int brake_bias;
+    int max_rpm;
 };
 
 #pragma pack(push)
