@@ -6,29 +6,13 @@
 
 #include <spdlog/spdlog.h>
 
+#include "common/defines.h"
 #include "shared_memory/shared_memory.h"
-#include "ui/shared_memory_emitter.h"
+#include "shared_memory/shared_memory_emitter.h"
 #include "ui/main_window.h"
 #include "ui/driver_input.h"
 
 std::atomic running{true};
-
-template<size_t N>
-void print_content(const std ::string_view name, wchar_t content[N])
-{
-    const auto transcode = QString::fromWCharArray(content, N);
-    std::cout << name << ": " << transcode.toStdString() << "\n";
-}
-
-void print_content(const std::string_view name, float content)
-{
-    std::cout << name << ": " << content << "\n";
-}
-
-void print_content(const std::string_view name, int content)
-{
-    std::cout << name << ": " << content << "\n";
-}
 
 int net_main(int argc, char *argv[])
 {
@@ -40,7 +24,7 @@ int net_main(int argc, char *argv[])
     return 0;
 }
 
-int shared_memory_main(std::shared_ptr<acc_engineer::shared_memory::shared_memory> memory, std::shared_ptr<acc_engineer::ui::shared_memory_emitter> emitter)
+int shared_memory_main(std::shared_ptr<acc_engineer::shared_memory::shared_memory> memory, std::shared_ptr<acc_engineer::shared_memory::emitter> emitter)
 {
     try
     {
@@ -49,15 +33,19 @@ int shared_memory_main(std::shared_ptr<acc_engineer::shared_memory::shared_memor
         while (running)
         {
             std::this_thread::sleep_for(sleep_ms);
-            if (!memory->driving())
+            auto frame = memory->snapshot();
+
+            if (!acc_engineer::shared_memory::shared_memory::driving(frame))
             {
-                sleep_ms = 2s;
-                SPDLOG_DEBUG("user not driving, sleep 2s");
+                sleep_ms = std::chrono::milliseconds(acc_engineer::not_driving_sleep_ms);
+                SPDLOG_DEBUG("user not driving, sleep {}ms", acc_engineer::not_driving_sleep_ms);
                 continue;
             }
-            sleep_ms = 15ms;
-            auto [physics_content, graphic_content, static_content] = memory->frame();
-            emitter->consume(physics_content, graphic_content, static_content);
+
+            sleep_ms = std::chrono::milliseconds(acc_engineer::driving_sleep_ms);
+            SPDLOG_DEBUG("user driving, sleep {}ms", acc_engineer::driving_sleep_ms);
+
+            emit emitter->new_frame(frame);
         }
     }
     catch (const std::exception &ex)
@@ -73,13 +61,13 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
 
     auto shared_memory = std::make_shared<acc_engineer::shared_memory::shared_memory>();
-    auto shared_memory_emitter = std::make_shared<acc_engineer::ui::shared_memory_emitter>();
+    auto shared_memory_emitter = std::make_shared<acc_engineer::shared_memory::emitter>();
 
     auto main_window = new acc_engineer::ui::main_window;
-    auto driver_input = new acc_engineer::ui::driver_input();
+    auto driver_input = new acc_engineer::ui::driver_input(main_window);
 
     std::thread shared_memory_thread(shared_memory_main, shared_memory, shared_memory_emitter);
-    QObject::connect(shared_memory_emitter.get(), &acc_engineer::ui::shared_memory_emitter::new_frame, driver_input, &acc_engineer::ui::driver_input::handle_new_frame);
+    QObject::connect(shared_memory_emitter.get(), &acc_engineer::shared_memory::emitter::new_frame, driver_input, &acc_engineer::ui::driver_input::handle_new_frame);
     //  std::thread net_main_thread(net_main, argc, argv);
 
     main_window->show();

@@ -7,6 +7,12 @@ constexpr std::string_view physics_page_file_path = "Local\\acpmf_physics";
 constexpr std::string_view graphics_page_file_path = "Local\\acpmf_graphics";
 constexpr std::string_view static_page_file_path = "Local\\acpmf_static";
 
+enum class driver_status
+{
+    not_driving = 0,
+    driving = 1
+};
+
 enum class penalty_shortcut : int
 {
     none = 0,
@@ -90,6 +96,18 @@ enum class acc_rain_intensity : int
     medium_rain = 3,
     heavy_rain = 4,
     thunderstorm = 5,
+};
+
+struct frame
+{
+    float gas;
+    float brake;
+    float fuel;
+    float steer_angle;
+    float speed_kmh;
+    int gear;
+    acc_status status;
+    int is_engine_running;
 };
 
 #pragma pack(push)

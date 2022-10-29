@@ -44,18 +44,18 @@ endfunction()
  set(ACC_ENGINEER_SHARED_MEMORY_SRCS
     src/shared_memory/defines.h
     src/shared_memory/shared_memory.h
+    src/shared_memory/shared_memory_emitter.h
     src/shared_memory/shared_memory.cpp)
 
 add_library(acc-engineer-shared-memory ${ACC_ENGINEER_SHARED_MEMORY_SRCS})
 target_link_libraries(acc-engineer-shared-memory Boost::boost)
+target_link_libraries(acc-engineer-shared-memory Qt6::Core)
 target_include_directories(acc-engineer-shared-memory PRIVATE src/)
 target_link_libraries(acc-engineer-shared-memory spdlog::spdlog)
 
 set(ACC_ENGINEER_UI_SRCS
     src/ui/driver_input.cpp
     src/ui/driver_input.h
-    src/ui/shared_memory_emitter.cpp
-    src/ui/shared_memory_emitter.h
     src/ui/main_window.cpp
     src/ui/main_window.h)
 

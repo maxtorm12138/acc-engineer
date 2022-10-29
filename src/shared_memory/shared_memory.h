@@ -13,9 +13,9 @@ class shared_memory : public boost::noncopyable
 public:
     shared_memory();
 
-    [[nodiscard]] bool driving() const;
+    [[nodiscard]] frame snapshot() const;
 
-    [[nodiscard]] std::tuple<page_file_physics, page_file_graphic, page_file_static> frame() const;
+    [[nodiscard]] static bool driving(const frame &frame);
 
 private:
     boost::interprocess::windows_shared_memory physics_memory_;

@@ -13,13 +13,26 @@ shared_memory::shared_memory()
     , static_content_(static_cast<page_file_static *>(static_region_.get_address()))
 {}
 
-bool shared_memory::driving() const
+bool shared_memory::driving(const frame &frame)
 {
-    return graphic_content_->status == acc_status::live && physics_content_->is_engine_running == 1;
+    return frame.status == acc_status::live && frame.is_engine_running == 1;
 }
 
-std::tuple<page_file_physics, page_file_graphic, page_file_static> shared_memory::frame() const
+frame shared_memory::snapshot() const
 {
-    return {*physics_content_, *graphic_content_, *static_content_};
+    auto physics_content = *physics_content_;
+    auto graphic_content = *graphic_content_;
+    auto static_content = *static_content_;
+
+    frame frame{.gas = physics_content.gas,
+        .brake = physics_content.brake,
+        .fuel = physics_content.fuel,
+        .steer_angle = physics_content.steer_angle,
+        .speed_kmh = physics_content.speed_kmh,
+        .gear = physics_content.gear,
+        .status = graphic_content.status,
+        .is_engine_running = physics_content.is_engine_running};
+
+    return frame;
 }
 } // namespace acc_engineer::shared_memory
