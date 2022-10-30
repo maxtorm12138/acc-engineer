@@ -10,6 +10,7 @@ class emitter final : public QObject
 {
     Q_OBJECT
 
+public:
 signals:
     void start_driving();
     void new_frame(frame frame);

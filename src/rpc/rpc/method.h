@@ -1,7 +1,7 @@
 #ifndef ACC_ENGINEER_SERVER_RPC_METHOD_H
 #define ACC_ENGINEER_SERVER_RPC_METHOD_H
 
-#include "detail/method.h"
+#include <rpc/detail/method.h>
 
 namespace acc_engineer::rpc {
 

@@ -7,7 +7,7 @@
       "inheritEnvironments": [ "msvc_x64_x64" ],
       "buildRoot": "${projectDir}\\out\\build\\${name}",
       "installRoot": "${projectDir}\\out\\install\\${name}",
-      "cmakeCommandArgs": "-DBOOST_ROOT=E:\\Library_Debug -DCMAKE_PREFIX_PATH=E:\\Library_Debug;C:\\Qt\\6.2.4\\msvc2019_64",
+      "cmakeCommandArgs": "-DBOOST_ROOT=E:\\Library_Debug -DCMAKE_PREFIX_PATH=E:\\Library_Debug;C:\\Qt\\6.2.4\\msvc2019_64 -DACC_ENGINEER_LOG_LEVEL=0",
       "buildCommandArgs": "",
       "ctestCommandArgs": ""
     }

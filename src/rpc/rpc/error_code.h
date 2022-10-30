@@ -1,8 +1,8 @@
 #ifndef ACC_ENGINEER_SERVER_RPC_ERROR_CODE_H
 #define ACC_ENGINEER_SERVER_RPC_ERROR_CODE_H
 
-#include "detail/error_code.h"
-#include "detail/await_error_code.h"
+#include <rpc/detail/error_code.h>
+#include <rpc/detail/await_error_code.h>
 
 namespace acc_engineer::rpc {
 using detail::await_error_code;

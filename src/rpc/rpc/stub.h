@@ -1,8 +1,8 @@
 #ifndef ACC_ENGINEER_SERVER_RPC_STUB_H
 #define ACC_ENGINEER_SERVER_RPC_STUB_H
 
-#include "detail/stub.h"
-#include "detail/packet_handler.h"
+#include <rpc/detail/stub.h>
+#include <rpc/detail/packet_handler.h>
 
 namespace acc_engineer::rpc {
 
