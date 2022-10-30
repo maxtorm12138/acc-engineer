@@ -9,13 +9,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(Protobuf_USE_STATIC_LIBS ON)
 
-set(CMAKE_AUTOUIC_SEARCH_PATHS ${CMAKE_AUTOUIC_SEARCH_PATHS} ${PROJECT_SOURCE_DIR}/ui)
+set(CMAKE_AUTOUIC_SEARCH_PATHS ${CMAKE_AUTOUIC_SEARCH_PATHS} ${PROJECT_SOURCE_DIR}/client/ui ${PROJECT_SOURCE_DIR}/server/ui)
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Widgets Charts OpenGL)
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets Charts OpenGL REQUIRED)
 find_package(Boost 1.80.0 COMPONENTS program_options REQUIRED)
 find_package(Protobuf REQUIRED)
 find_package(spdlog REQUIRED)
@@ -89,31 +89,43 @@ target_link_libraries(acc-engineer-shared-memory PRIVATE Boost::boost)
 target_link_libraries(acc-engineer-shared-memory PRIVATE spdlog::spdlog)
 target_link_libraries(acc-engineer-shared-memory PRIVATE Qt6::Core)
 target_include_directories(acc-engineer-shared-memory PUBLIC src/shared_memory)
+target_compile_definitions(acc-engineer-shared-memory PRIVATE SPDLOG_ACTIVE_LEVEL=${ACC_ENGINEER_LOG_LEVEL})
 
-# target_link_libraries(acc-engineer-shared-memory Qt6::Core)
+if (ACC_ENGINEER_BUILD_CLIENT)
+    set(ACC_ENGINEER_CLIENT_SRCS
+        client/src/ui/connect.cpp
+        client/src/ui/connect.h
+        client/src/ui/driver_input.cpp
+        client/src/ui/driver_input.h
+        client/src/ui/main_window.cpp
+        client/src/ui/main_window.h
+        client/src/logic.cpp
+        client/src/logic.h
+        client/src/app.cpp
+        client/src/app.h
+    )
+
+    add_executable(acc-engineer client/src/main.cpp ${ACC_ENGINEER_CLIENT_SRCS})
+    target_compile_definitions(acc-engineer PRIVATE SPDLOG_ACTIVE_LEVEL=${ACC_ENGINEER_LOG_LEVEL} BOOST_ASIO_NO_DEPRECATED)
+    target_link_directories(acc-engineer PRIVATE ${QWT_LIBRARY_DIR})
+    target_include_directories(acc-engineer PRIVATE ${CMAKE_BINARY_DIR} client/src)
+
+    target_link_libraries(acc-engineer PUBLIC acc-engineer-shared-memory acc-engineer-rpc)
+    target_link_libraries(acc-engineer PUBLIC Boost::boost)
+    target_link_libraries(acc-engineer PUBLIC protobuf::libprotobuf)
+    target_link_libraries(acc-engineer PUBLIC spdlog::spdlog)
+    target_link_libraries(acc-engineer PUBLIC Qt6::Core Qt6::Widgets Qt6::OpenGL)
+    if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+        target_link_libraries(acc-engineer PUBLIC qwtd)
+    else()
+        target_link_libraries(acc-engineer PUBLIC qwt)
+    endif()
+
+    if (WIN32)
+        target_compile_definitions(acc-engineer PRIVATE _WIN32_WINNT=0x0A00)
+    endif ()
+endif()
 # 
-# set(ACC_ENGINEER_UI_SRCS
-#     src/ui/driver_input.cpp
-#     src/ui/driver_input.h
-#     src/ui/main_window.cpp
-#     src/ui/main_window.h)
-# 
-# 
-# set(ACC_ENGINEER_SRCS
-#     ${ACC_ENGINEER_UI_SRCS}
-#     )
-# 
-# 
-# if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-#     add_executable(acc-engineer src/main.cpp ${ACC_ENGINEER_SRCS})
-#     target_compile_definitions(acc-engineer PRIVATE SPDLOG_ACTIVE_LEVEL=0)
-#     target_link_directories(acc-engineer PRIVATE "E:/qwt-6.2.0/lib")
-#     target_link_libraries(acc-engineer qwtd.dll)
-# else()
-#     add_executable(acc-engineer WIN32 src/main.cpp ${ACC_ENGINEER_SRCS})
-#     target_link_directories(acc-engineer PRIVATE "E:/qwt-6.2.0/lib")
-#     target_link_libraries(acc-engineer qwt.dll)
-# endif ()
 # 
 # target_link_libraries(acc-engineer acc-engineer-shared-memory)
 # target_link_libraries(acc-engineer Boost::boost)

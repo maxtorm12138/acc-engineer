@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <string_view>
 
+#include "car_spec.h"
+
 namespace acc_engineer::shared_memory {
 
 constexpr std::string_view physics_page_file_path = "Local\\acpmf_physics";

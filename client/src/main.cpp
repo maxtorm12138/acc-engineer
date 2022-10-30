@@ -9,8 +9,8 @@
 #include "common/defines.h"
 #include "shared_memory/reader.h"
 #include "shared_memory/emitter.h"
-#include "ui/main_window.h"
-#include "ui/driver_input.h"
+
+#include "app.h"
 
 std::atomic running{true};
 
@@ -59,24 +59,10 @@ int main(int argc, char *argv[])
 {
     spdlog::set_level(spdlog::level::trace);
     QApplication app(argc, argv);
+    QObject::connect(&app, &QGuiApplication::lastWindowClosed, &app, &QApplication::quit);
 
-    auto reader = std::make_shared<acc_engineer::shared_memory::reader>();
-    auto emitter = std::make_shared<acc_engineer::shared_memory::emitter>();
+    acc_engineer::app my_app(&app);
+    my_app.start();
 
-    auto main_window = new acc_engineer::ui::main_window;
-    auto driver_input = new acc_engineer::ui::driver_input(main_window);
-
-    std::thread shared_memory_thread(shared_memory_main, reader, emitter);
-    QObject::connect(emitter.get(), &acc_engineer::shared_memory::emitter::new_frame, driver_input, &acc_engineer::ui::driver_input::handle_new_frame);
-    //  std::thread net_main_thread(net_main, argc, argv);
-
-    main_window->show();
-    driver_input->show();
-
-    const int ret = app.exec(); // NOLINT(readability-static-accessed-through-instance)
-    running = false;
-    // net_main_thread.join();
-
-    shared_memory_thread.join();
-    return ret;
+    return app.exec();
 }

@@ -8,8 +8,8 @@
 #include <boost/circular_buffer.hpp>
 
 // module
-#include "common/defines.h"
-#include "shared_memory/defines.h"
+#include <common/defines.h>
+#include <shared_memory/defines.h>
 
 // ui forward declaration
 namespace Ui {
@@ -46,11 +46,11 @@ private:
 
     struct sample
     {
-        boost::circular_buffer<float> x_buffer{driver_input_dots};
-        boost::circular_buffer<float> y_buffer{driver_input_dots};
+        boost::circular_buffer<float> x_buffer{driver_input_plot_dot_size};
+        boost::circular_buffer<float> y_buffer{driver_input_plot_dot_size};
 
-        std::array<float, driver_input_dots> x_view{};
-        std::array<float, driver_input_dots> y_view{};
+        std::array<float, driver_input_plot_dot_size> x_view{};
+        std::array<float, driver_input_plot_dot_size> y_view{};
 
         void buffer_to_view();
     };
