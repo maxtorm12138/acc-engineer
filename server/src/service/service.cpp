@@ -151,21 +151,11 @@ net::awaitable<void> service::new_tcp_connection(net::ip::tcp::socket socket)
         auto timer = std::make_shared<net::steady_timer>(co_await net::this_coro::executor);
 
         tcp_session session{.id = stub_id, .driver_id = 0, .stub = tcp_stub, .watcher = timer};
-        staged_tcp_sessions_.emplace(std::move(session));
+        tcp_session_manager_.add_session(session);
 
         BOOST_SCOPE_EXIT_ALL(&)
         {
-            auto &view0 = staged_tcp_sessions_.get<by_stub_id>();
-            auto &view1 = tcp_sessions_.get<by_stub_id>();
-
-            if (auto it = view0.extract(stub_id); !it.empty())
-            {
-                SPDLOG_TRACE("new_tcp_connection extract {} from staged_tcp_sessions", stub_id);
-            }
-            else if (auto it = view1.extract(stub_id); !it.empty())
-            {
-                SPDLOG_TRACE("new_tcp_connection extract {} from tcp_sessions", stub_id);
-            }
+            tcp_session_manager_.remove_session(stub_id);
         };
 
         auto watcher = [this, timer, weak_tcp_stub = std::weak_ptr(tcp_stub), stub_id]() -> net::awaitable<void> {
@@ -203,30 +193,20 @@ net::awaitable<void> service::new_udp_connection(net::ip::udp::socket &acceptor,
     try
     {
         auto executor = co_await net::this_coro::executor;
-        rpc::channel_packet_handler packet_handler({executor, 10}, {executor, 10});
+        rpc::channel_packet_handler packet_handler({executor}, {executor});
         auto channel_stub = rpc::channel_stub::create(std::move(packet_handler), methods_);
         stub_id = channel_stub->id();
 
         auto timer = std::make_shared<net::steady_timer>(co_await net::this_coro::executor);
         udp_session session{.id = stub_id, .endpoint = remote, .stub = channel_stub, .watcher = timer};
 
-        staged_udp_sessions_.emplace(std::move(session));
+        udp_session_manager_.add_session(session);
         BOOST_SCOPE_EXIT_ALL(&)
         {
-            auto &view0 = staged_udp_sessions_.get<by_stub_id>();
-            auto &view1 = udp_sessions_.get<by_stub_id>();
-
-            if (auto it = view0.extract(stub_id); !it.empty())
-            {
-                SPDLOG_DEBUG("new_udp_connection extract {} from staged_udp_sessions", stub_id);
-            }
-            else if (auto it = view1.extract(stub_id); !it.empty())
-            {
-                SPDLOG_DEBUG("new_udp_connection extract {} from udp_sessions", stub_id);
-            }
+            udp_session_manager_.remove_session(stub_id);
         };
 
-        auto watcher = [this, timer, weak_stub = std::weak_ptr(channel_stub), stub_id]() -> net::awaitable<void> {
+        auto watcher = [timer, weak_stub = std::weak_ptr(channel_stub), stub_id]() -> net::awaitable<void> {
             sys::error_code error_code;
             timer->expires_after(10s);
             do
@@ -236,12 +216,12 @@ net::awaitable<void> service::new_udp_connection(net::ip::udp::socket &acceptor,
 
             if (auto stub = weak_stub.lock(); stub != nullptr)
             {
-                SPDLOG_INFO("new_udp_connection watcher {} expires", stub_id);
+                SPDLOG_TRACE("new_udp_connection watcher {} expires", stub_id);
                 co_await stub->stop();
             }
         };
 
-        auto sender = [this, channel_stub, &acceptor, remote]() -> net::awaitable<void> {
+        auto sender = [channel_stub, &acceptor, remote]() -> net::awaitable<void> {
             sys::error_code error_code;
             while (!error_code)
             {
@@ -280,47 +260,11 @@ net::awaitable<sys::error_code> service::timer_reset(uint64_t command_id, const 
 
     if (context.packet_handler_type == rpc::tcp_packet_handler::type)
     {
-        auto &view0 = staged_tcp_sessions_.get<by_stub_id>();
-        auto &view1 = tcp_sessions_.get<by_stub_id>();
-
-        if (auto it_session = view0.find(context.stub_id); it_session != view0.end())
-        {
-            if (auto timer = it_session->watcher.lock(); timer != nullptr)
-            {
-                SPDLOG_DEBUG("timer_reset {}", context.stub_id);
-                timer->expires_after(10s);
-            }
-        }
-        else if (auto it_session = view1.find(context.stub_id); it_session != view1.end())
-        {
-            if (auto timer = it_session->watcher.lock(); timer != nullptr)
-            {
-                SPDLOG_DEBUG("timer_reset {}", context.stub_id);
-                timer->expires_after(10s);
-            }
-        }
+        tcp_session_manager_.reset_timer(context.stub_id, 10s);
     }
     else if (context.packet_handler_type == rpc::channel_packet_handler::type)
     {
-        auto &view0 = staged_udp_sessions_.get<by_stub_id>();
-        auto &view1 = udp_sessions_.get<by_stub_id>();
-
-        if (auto it_session = view0.find(context.stub_id); it_session != view0.end())
-        {
-            if (auto timer = it_session->watcher.lock(); timer != nullptr)
-            {
-                SPDLOG_DEBUG("timer_reset {}", context.stub_id);
-                timer->expires_after(10s);
-            }
-        }
-        else if (auto it_session = view1.find(context.stub_id); it_session != view1.end())
-        {
-            if (auto timer = it_session->watcher.lock(); timer != nullptr)
-            {
-                SPDLOG_DEBUG("timer_reset {}", context.stub_id);
-                timer->expires_after(10s);
-            }
-        }
+        udp_session_manager_.reset_timer(context.stub_id, 10s);
     }
 
     co_return rpc::system_error::success;
@@ -335,8 +279,7 @@ net::awaitable<Echo::Response> service::echo(const rpc::context &context, const 
 
 net::awaitable<Authentication::Response> service::authentication(const rpc::context &context, const Authentication::Request &request)
 {
-
-    if (request.password() != config_.password())
+    if (request.password() != config_.password() || request.driver_name().empty())
     {
         Authentication::Response response;
         response.set_error_code(1);
@@ -344,66 +287,33 @@ net::awaitable<Authentication::Response> service::authentication(const rpc::cont
         co_return response;
     }
 
-    uint64_t allocated_driver_id = 0;
-    if (request.driver_id() != 0)
-    {
-        auto &view = drivers_.get<by_driver_id>();
-        if (auto it_driver = view.find(request.driver_id()); it_driver != view.end() && it_driver->name != request.driver_name())
-        {
-            Authentication::Response response;
-            response.set_error_code(2);
-            response.set_error_message("authentication failure");
-            co_return response;
-        }
-
-        allocated_driver_id = request.driver_id();
-    }
-    else
-    {
-        allocated_driver_id = driver_id_max_++;
-        driver driver{.id = allocated_driver_id, .name = request.driver_name()};
-        drivers_.emplace(driver);
-    }
-
+    uint64_t driver_id = 0;
     if (context.packet_handler_type == rpc::tcp_packet_handler::type)
     {
-        auto &view0 = staged_tcp_sessions_.get<by_stub_id>();
-        auto node = view0.extract(context.stub_id);
-        if (node.empty()) {}
+        driver_id = driver_id_max_++;
+        tcp_session_manager_.mark_authened(context.stub_id, driver_id, request.driver_name());
+        drivers_.emplace(driver{.id = driver_id, .name = request.driver_name()});
 
-        tcp_session session = node.value();
-        session.driver_id = allocated_driver_id;
-        session.driver_name = request.driver_name();
+        DriverUpdate::Request driver_update_request;
+        for (auto driver : drivers_)
+        {
+            auto dri = driver_update_request.add_drivers();
+            dri->set_driver_id(driver.id);
+            dri->set_driver_name(driver.name);
+        }
 
-        tcp_sessions_.emplace(session);
+        co_await post<DriverUpdate>(driver_update_request);
     }
-    else if (context.packet_handler_type == rpc::udp_packet_handler::type)
+    else if (context.packet_handler_type == rpc::channel_packet_handler::type && request.driver_id() != 0)
     {
-        auto &view0 = staged_udp_sessions_.get<by_stub_id>();
-        auto node = view0.extract(context.stub_id);
-        if (node.empty()) {}
-
-        udp_session session = node.value();
-        session.driver_id = allocated_driver_id;
-        session.driver_name = request.driver_name();
-
-        udp_sessions_.emplace(session);
+        driver_id = request.driver_id();
+        udp_session_manager_.mark_authened(context.stub_id, request.driver_id(), request.driver_name());
     }
-
-    DriverUpdate::Request driver_update_request;
-    for (auto driver : drivers_)
-    {
-        auto dri = driver_update_request.add_drivers();
-        dri->set_driver_id(driver.id);
-        dri->set_driver_name(driver.name);
-    }
-
-    co_await post<DriverUpdate>(driver_update_request);
 
     Authentication::Response response;
     response.set_error_code(0);
     response.set_error_message("success");
-    response.set_driver_id(allocated_driver_id);
+    response.set_driver_id(driver_id);
     co_return response;
 }
 

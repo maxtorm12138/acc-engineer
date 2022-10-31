@@ -124,7 +124,7 @@ stub<PacketHandler>::stub(packet_handler_type packet_handler, const methods &met
 template<typename PacketHandler>
 stub<PacketHandler>::~stub()
 {
-    SPDLOG_TRACE("~stub {}", id_);
+    SPDLOG_DEBUG("~stub {}", id_);
 }
 
 template<typename PacketHandler>
@@ -269,7 +269,7 @@ net::awaitable<void> stub<PacketHandler>::input_loop()
         {
             if (error_code == system_error::operation_canceled)
             {
-                SPDLOG_INFO("input_loop {} PacketHandler::receive_packet system_error: {}", id_, error_code.message());
+                SPDLOG_TRACE("input_loop {} PacketHandler::receive_packet system_error: {}", id_, error_code.message());
             }
             else
             {
@@ -283,7 +283,7 @@ net::awaitable<void> stub<PacketHandler>::input_loop()
         {
             if (error_code == net::experimental::error::channel_cancelled)
             {
-                SPDLOG_INFO("input_loop {} input_channel_.async_send system_error: {}", id_, error_code.message());
+                SPDLOG_TRACE("input_loop {} input_channel_.async_send system_error: {}", id_, error_code.message());
             }
             else
             {
@@ -307,7 +307,7 @@ net::awaitable<void> stub<PacketHandler>::output_loop()
         {
             if (error_code == net::experimental::error::channel_cancelled)
             {
-                SPDLOG_INFO("output_loop {} output_channel_.async_receive system_error: {}", id_, error_code.message());
+                SPDLOG_TRACE("output_loop {} output_channel_.async_receive system_error: {}", id_, error_code.message());
             }
             else
             {
@@ -321,7 +321,7 @@ net::awaitable<void> stub<PacketHandler>::output_loop()
         {
             if (error_code == system_error::operation_canceled)
             {
-                SPDLOG_INFO("output_loop {} PacketHandler::send_packet system_error: {}", id_, error_code.message());
+                SPDLOG_TRACE("output_loop {} PacketHandler::send_packet system_error: {}", id_, error_code.message());
             }
             else
             {
@@ -346,7 +346,7 @@ net::awaitable<void> stub<PacketHandler>::worker_loop(uint64_t worker_id)
         {
             if (error_code == net::experimental::error::channel_cancelled)
             {
-                SPDLOG_INFO("worker_loop {}:{} input_channel_.async_receive system_error: {}", id_, worker_id, error_code.message());
+                SPDLOG_TRACE("worker_loop {}:{} input_channel_.async_receive system_error: {}", id_, worker_id, error_code.message());
             }
             else
             {
@@ -385,7 +385,7 @@ net::awaitable<void> stub<PacketHandler>::worker_loop(uint64_t worker_id)
             {
                 if (error_code == net::experimental::error::channel_cancelled)
                 {
-                    SPDLOG_INFO("worker_loop {}:{} output_channel_.async_send system_error: {}", id_, worker_id, error_code.message());
+                    SPDLOG_TRACE("worker_loop {}:{} output_channel_.async_send system_error: {}", id_, worker_id, error_code.message());
                 }
                 else
                 {
@@ -409,7 +409,7 @@ net::awaitable<void> stub<PacketHandler>::worker_loop(uint64_t worker_id)
             {
                 if (error_code == net::experimental::error::channel_cancelled)
                 {
-                    SPDLOG_INFO("worker_loop {}:{} calling_channel_.async_send system_error: {}", id_, worker_id, error_code.message());
+                    SPDLOG_TRACE("worker_loop {}:{} calling_channel_.async_send system_error: {}", id_, worker_id, error_code.message());
                 }
                 else
                 {

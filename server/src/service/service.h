@@ -19,67 +19,15 @@
 #include <rpc/batch_task.h>
 
 #include "config.h"
+#include "session.h"
 
 // protocol
 #include "proto/service.pb.h"
-
-namespace boost {
-template<>
-struct hash<boost::asio::ip::udp::endpoint>
-{
-    constexpr size_t operator()(const boost::asio::ip::udp::endpoint &ep) const noexcept
-    {
-        return std::hash<boost::asio::ip::udp::endpoint>{}(ep);
-    }
-};
-} // namespace boost
 
 namespace acc_engineer {
 namespace net = boost::asio;
 namespace sys = boost::system;
 namespace mi = boost::multi_index;
-
-struct udp_session
-{
-    uint64_t id;
-    net::ip::udp::endpoint endpoint;
-    uint64_t driver_id;
-    std::string driver_name;
-
-    // connection objects
-    std::weak_ptr<rpc::channel_stub> stub;
-    std::weak_ptr<net::steady_timer> watcher;
-};
-
-struct tcp_session
-{
-    // index
-    uint64_t id;
-    uint64_t driver_id;
-    std::string driver_name;
-
-    // connection objects
-    std::weak_ptr<rpc::tcp_stub> stub;
-    std::weak_ptr<net::steady_timer> watcher;
-};
-
-struct driver
-{
-    uint64_t id;
-    std::string name;
-};
-
-struct by_stub_id
-{};
-
-struct by_endpoint
-{};
-
-struct by_driver_id
-{};
-
-struct by_driver_name
-{};
 
 class service
 {
@@ -117,41 +65,10 @@ private:
     rpc::methods methods_;
     std::unique_ptr<rpc::batch_task<void>> runner_;
 
+    udp_session_manager udp_session_manager_;
+    tcp_session_manager tcp_session_manager_;
+
     // clang-format off
-    boost::multi_index_container<
-        udp_session,
-        mi::indexed_by<
-            mi::hashed_unique<mi::tag<by_stub_id>, mi::key< &udp_session::id>>,
-            mi::hashed_unique<mi::tag<by_driver_id>, mi::key<&udp_session::driver_id>>,
-            mi::hashed_unique<mi::tag<by_endpoint>, mi::key<&udp_session::endpoint>>,
-            mi::hashed_unique<mi::tag<by_driver_name>, mi::key<&udp_session::driver_name>>
-        >
-    > udp_sessions_;
-
-    boost::multi_index_container<
-        udp_session,
-        mi::indexed_by<
-            mi::hashed_unique<mi::tag<by_stub_id>, mi::key<&udp_session::id>>,
-            mi::hashed_unique<mi::tag<by_endpoint>, mi::key<&udp_session::endpoint>>
-        >
-    > staged_udp_sessions_;
-
-    boost::multi_index_container<
-        tcp_session,
-        mi::indexed_by<
-            mi::hashed_unique<mi::tag<by_stub_id>, mi::key<&tcp_session::id>>,
-            mi::hashed_unique<mi::tag<by_driver_id>, mi::key<&tcp_session::driver_id>>,
-            mi::hashed_unique<mi::tag<by_driver_name>, mi::key<&tcp_session::driver_name>>
-        >
-    > tcp_sessions_;
-
-    boost::multi_index_container<
-        tcp_session,
-        mi::indexed_by<
-            mi::hashed_unique<mi::tag<by_stub_id>, mi::key<&tcp_session::id>>
-        >
-    > staged_tcp_sessions_;
-
     boost::multi_index_container<
         driver,
         mi::indexed_by<
@@ -171,7 +88,7 @@ net::awaitable<void> service::post(const rpc::request_t<Message> &request)
     auto executor = co_await net::this_coro::executor;
     rpc::batch_task<rpc::response_t<Message>> poster;
 
-    for (auto &session : tcp_sessions_)
+    for (auto &session : tcp_session_manager_.authened())
     {
         if (auto stub = session.stub.lock(); stub != nullptr)
         {
@@ -187,7 +104,7 @@ net::awaitable<void> service::broadcast(const rpc::request_t<Message> &request)
 {
     auto executor = co_await net::this_coro::executor;
     rpc::batch_task<rpc::response_t<Message>> poster;
-    for (auto &session : udp_sessions_)
+    for (auto &session : udp_session_manager_.authened())
     {
         if (auto stub = session.stub.lock(); stub != nullptr)
         {
