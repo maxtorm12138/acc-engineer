@@ -152,6 +152,23 @@ public:
         return authened_udp_sessions_;
     }
 
+    std::shared_ptr<rpc::channel_stub> stub(uint64_t stub_id)
+    {
+        if (staged_udp_sessions_.get<by_stub_id>().contains(stub_id))
+        {
+            return staged_udp_sessions_.get<by_stub_id>().find(stub_id)->stub.lock();
+        }
+        else if (authened_udp_sessions_.get<by_stub_id>().contains(stub_id))
+        {
+            return authened_udp_sessions_.get<by_stub_id>().find(stub_id)->stub.lock();
+        }
+        else
+        {
+            SPDLOG_CRITICAL("udp_session_manager stub stub_id not found in sessions");
+            std::abort();
+        }
+    }
+
 private:
     // clang-format off
     boost::multi_index_container<
