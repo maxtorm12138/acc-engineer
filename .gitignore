@@ -34,3 +34,6 @@
 out
 .idea
 .vs
+build
+.cache
+.vscode

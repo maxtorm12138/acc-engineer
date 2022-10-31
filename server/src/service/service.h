@@ -14,9 +14,9 @@
 #include <boost/multi_index/key.hpp>
 
 // module
-#include "rpc/stub.h"
-#include "rpc/method.h"
-#include "rpc/batch_task.h"
+#include <rpc/stub.h>
+#include <rpc/method.h>
+#include <rpc/batch_task.h>
 
 #include "config.h"
 

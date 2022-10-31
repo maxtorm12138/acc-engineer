@@ -15,7 +15,7 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Widgets Charts OpenGL REQUIRED)
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets OpenGL REQUIRED)
 find_package(Boost 1.80.0 COMPONENTS program_options REQUIRED)
 find_package(Protobuf REQUIRED)
 find_package(spdlog REQUIRED)
@@ -43,6 +43,7 @@ function(generate_proto PROTO_ROOT PROTO_FILE GENERATE_PATH OUT_FILES)
 endfunction()
 
 generate_proto(proto/ proto/rpc.proto ${CMAKE_CURRENT_BINARY_DIR}/proto ACC_ENGINEER_RPC_PROTO_FILES)
+generate_proto(proto/ proto/service.proto ${CMAKE_CURRENT_BINARY_DIR}/proto ACC_ENGINEER_SERVICE_PROTO_FILES)
 
 set(ACC_ENGINEER_LOG_LEVEL CACHE STRING 3)
 
@@ -75,24 +76,26 @@ if (WIN32)
     target_compile_definitions(acc-engineer-rpc PRIVATE _WIN32_WINNT=0x0A00)
 endif ()
 
+if (WIN32)
+    set(ACC_ENGINEER_SHARED_MEMORY_SRCS
+       src/shared_memory/shared_memory/defines.h
+       src/shared_memory/shared_memory/reader.h
+       src/shared_memory/shared_memory/tools.h
+       src/shared_memory/shared_memory/car_spec.h
+       src/shared_memory/shared_memory/emitter.h
+       src/shared_memory/shared_memory/reader.cpp)
 
-set(ACC_ENGINEER_SHARED_MEMORY_SRCS
-   src/shared_memory/shared_memory/defines.h
-   src/shared_memory/shared_memory/reader.h
-   src/shared_memory/shared_memory/tools.h
-   src/shared_memory/shared_memory/car_spec.h
-   src/shared_memory/shared_memory/emitter.h
-   src/shared_memory/shared_memory/reader.cpp)
+    add_library(acc-engineer-shared-memory ${ACC_ENGINEER_SHARED_MEMORY_SRCS})
+    target_link_libraries(acc-engineer-shared-memory PRIVATE Boost::boost)
+    target_link_libraries(acc-engineer-shared-memory PRIVATE spdlog::spdlog)
+    target_link_libraries(acc-engineer-shared-memory PRIVATE Qt6::Core)
+    target_include_directories(acc-engineer-shared-memory PUBLIC src/shared_memory)
+    target_compile_definitions(acc-engineer-shared-memory PRIVATE SPDLOG_ACTIVE_LEVEL=${ACC_ENGINEER_LOG_LEVEL})
+endif()
 
-add_library(acc-engineer-shared-memory ${ACC_ENGINEER_SHARED_MEMORY_SRCS})
-target_link_libraries(acc-engineer-shared-memory PRIVATE Boost::boost)
-target_link_libraries(acc-engineer-shared-memory PRIVATE spdlog::spdlog)
-target_link_libraries(acc-engineer-shared-memory PRIVATE Qt6::Core)
-target_include_directories(acc-engineer-shared-memory PUBLIC src/shared_memory)
-target_compile_definitions(acc-engineer-shared-memory PRIVATE SPDLOG_ACTIVE_LEVEL=${ACC_ENGINEER_LOG_LEVEL})
-
-if (ACC_ENGINEER_BUILD_CLIENT)
+if (WIN32 AND ACC_ENGINEER_BUILD_CLIENT)
     set(ACC_ENGINEER_CLIENT_SRCS
+        ${ACC_ENGINEER_SERVICE_PROTO_FILES}
         client/src/ui/connect.cpp
         client/src/ui/connect.h
         client/src/ui/driver_input.cpp
@@ -106,34 +109,40 @@ if (ACC_ENGINEER_BUILD_CLIENT)
     )
 
     add_executable(acc-engineer client/src/main.cpp ${ACC_ENGINEER_CLIENT_SRCS})
-    target_compile_definitions(acc-engineer PRIVATE SPDLOG_ACTIVE_LEVEL=${ACC_ENGINEER_LOG_LEVEL} BOOST_ASIO_NO_DEPRECATED)
     target_link_directories(acc-engineer PRIVATE ${QWT_LIBRARY_DIR})
-    target_include_directories(acc-engineer PRIVATE ${CMAKE_BINARY_DIR} client/src)
-
-    target_link_libraries(acc-engineer PUBLIC acc-engineer-shared-memory acc-engineer-rpc)
-    target_link_libraries(acc-engineer PUBLIC Boost::boost)
-    target_link_libraries(acc-engineer PUBLIC protobuf::libprotobuf)
-    target_link_libraries(acc-engineer PUBLIC spdlog::spdlog)
-    target_link_libraries(acc-engineer PUBLIC Qt6::Core Qt6::Widgets Qt6::OpenGL)
+    target_link_libraries(acc-engineer PRIVATE acc-engineer-shared-memory acc-engineer-rpc)
+    target_link_libraries(acc-engineer PRIVATE Boost::boost)
+    target_link_libraries(acc-engineer PRIVATE protobuf::libprotobuf)
+    target_link_libraries(acc-engineer PRIVATE spdlog::spdlog)
+    target_link_libraries(acc-engineer PRIVATE Qt6::Core Qt6::Widgets Qt6::OpenGL)
     if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-        target_link_libraries(acc-engineer PUBLIC qwtd)
+        target_link_libraries(acc-engineer PRIVATE qwtd)
     else()
-        target_link_libraries(acc-engineer PUBLIC qwt)
+        target_link_libraries(acc-engineer PRIVATE qwt)
     endif()
 
+    target_include_directories(acc-engineer PRIVATE ${CMAKE_CURRENT_BINARY_DIR} client/src)
+    target_compile_definitions(acc-engineer PRIVATE SPDLOG_ACTIVE_LEVEL=${ACC_ENGINEER_LOG_LEVEL} BOOST_ASIO_NO_DEPRECATED)
     if (WIN32)
         target_compile_definitions(acc-engineer PRIVATE _WIN32_WINNT=0x0A00)
     endif ()
 endif()
-# 
-# 
-# target_link_libraries(acc-engineer acc-engineer-shared-memory)
-# target_link_libraries(acc-engineer Boost::boost)
-# target_link_libraries(acc-engineer protobuf::libprotobuf)
-# target_link_libraries(acc-engineer spdlog::spdlog)
-# target_link_libraries(acc-engineer Qt6::Core Qt6::Widgets Qt6::Charts)
-# target_include_directories(acc-engineer PRIVATE src/)
-# target_include_directories(acc-engineer PRIVATE "E:/Qwt-6.2.0/include")
-# target_compile_definitions(acc-engineer PRIVATE BOOST_ASIO_NO_DEPRECATED)
-# 
-# add_subdirectory(server)
+
+if (ACC_ENGINEER_BUILD_SERVER)
+    set(ACC_ENGINEER_SERVER_SRCS
+            ${ACC_ENGINEER_SERVICE_PROTO_FILES}
+            server/src/service/config.cpp
+            server/src/service/config.h
+            server/src/service/service.cpp
+            server/src/service/service.h)
+    add_executable(acc-engineer-server ${ACC_ENGINEER_SERVER_SRCS} server/src/main.cpp)
+    target_link_libraries(acc-engineer-server PRIVATE acc-engineer-rpc)
+    target_link_libraries(acc-engineer-server PRIVATE Boost::boost Boost::program_options)
+    target_link_libraries(acc-engineer-server PRIVATE protobuf::libprotobuf)
+    target_link_libraries(acc-engineer-server PRIVATE spdlog::spdlog)
+    target_include_directories(acc-engineer-server PRIVATE ${CMAKE_CURRENT_BINARY_DIR} server/src/)
+    target_compile_definitions(acc-engineer-server PRIVATE SPDLOG_ACTIVE_LEVEL=${ACC_ENGINEER_LOG_LEVEL} BOOST_ASIO_NO_DEPRECATED)
+    if (WIN32)
+        target_compile_definitions(acc-engineer-server PRIVATE _WIN32_WINNT=0x0A00)
+    endif ()
+endif()
