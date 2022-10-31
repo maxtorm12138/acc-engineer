@@ -123,7 +123,7 @@ template<typename PacketHandler>
 net::awaitable<void> stub<PacketHandler>::run()
 {
     auto executor = co_await net::this_coro::executor;
-    runner_ = std::make_unique<batch_task<void>>(executor);
+    runner_ = std::make_unique<batch_task<void>>();
 
     status_ = stub_status::running;
     BOOST_SCOPE_EXIT_ALL(&)

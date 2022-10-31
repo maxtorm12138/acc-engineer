@@ -5,7 +5,7 @@
 #include <spdlog/spdlog.h>
 #include <boost/system/error_code.hpp>
 
-#include "rpc/batch_task.h"
+#include <rpc/batch_task.h>
 
 namespace net = boost::asio;
 namespace sys = boost::system;
@@ -125,7 +125,7 @@ net::awaitable<move_only_object> move_only_job()
 net::awaitable<void> run_void_job()
 {
     auto executor = co_await net::this_coro::executor;
-    rpc::batch_task<void> batch_task(executor);
+    rpc::batch_task<void> batch_task;
     co_await batch_task.add(void_job<0>());
     co_await batch_task.add(void_job<1>());
     co_await batch_task.add(void_job<2>());
@@ -138,7 +138,7 @@ net::awaitable<void> run_void_job()
 net::awaitable<void> run_cancel_job()
 {
     auto executor = co_await net::this_coro::executor;
-    rpc::batch_task<void> batch_task(executor);
+    rpc::batch_task<void> batch_task;
     co_await batch_task.add(cancel_job<0>());
     co_await batch_task.add(cancel_job<1>());
     co_await batch_task.add(cancel_job<2>());
@@ -168,7 +168,7 @@ net::awaitable<void> run_cancel_job()
 net::awaitable<void> run_value_job()
 {
     auto executor = co_await net::this_coro::executor;
-    rpc::batch_task<int> batch_task(executor);
+    rpc::batch_task<int> batch_task;
 
     co_await batch_task.add(value_job<0>());
     co_await batch_task.add(value_job<1>());
@@ -191,7 +191,7 @@ net::awaitable<void> run_value_job()
 net::awaitable<void> run_move_only_job()
 {
     auto executor = co_await net::this_coro::executor;
-    rpc::batch_task<move_only_object> batch_task(executor);
+    rpc::batch_task<move_only_object> batch_task;
 
     co_await batch_task.add(move_only_job<0>());
     co_await batch_task.add(move_only_job<1>());

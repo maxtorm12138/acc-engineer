@@ -62,30 +62,28 @@ protected:
     std::atomic<uint64_t> pending_tasks_{0};
 };
 
-template<typename T, typename Executor = net::any_io_executor>
+template<typename T>
 class batch_task : public batch_task_base
 {
 public:
-    batch_task(Executor &executor)
-        : task_result_channel_(std::make_shared<net::experimental::channel<Executor, void(sys::error_code, uint64_t, std::exception_ptr, wrap_type<T>)>>(executor))
-    {}
-
-public:
-    template<typename Executor1>
-    net::awaitable<void> add(net::awaitable<T, Executor1> task)
+    template<typename Executor>
+    net::awaitable<void> add(net::awaitable<T, Executor> task)
     {
         auto executor = co_await net::this_coro::executor;
-        auto order = pending_tasks_++;
+        if (task_result_channel_ == nullptr)
+        {
+            task_result_channel_ = std::make_shared<net::experimental::channel<void(sys::error_code, uint64_t, std::exception_ptr, wrap_type<T>)>>(executor);
+        }
 
         auto cancellation_signal = std::make_shared<net::cancellation_signal>();
         cancellation_signals_.emplace_back(cancellation_signal);
 
-        auto chan = task_result_channel_;
+        auto completion_token = net::bind_cancellation_slot(
+            cancellation_signal->slot(), [chan = task_result_channel_, cancellation_signal, order = pending_tasks_++](std::exception_ptr exception_ptr, wrap_type<T> value) {
+                chan->async_send({}, order, exception_ptr, std::move(value), [](sys::error_code error_code) {});
+            });
 
-        net::co_spawn(executor, wrap(std::move(task)),
-            net::bind_cancellation_slot(cancellation_signal->slot(), [chan, cancellation_signal, order](std::exception_ptr exception_ptr, wrap_type<T> value) {
-                chan->async_send({}, order, exception_ptr, std::move(value), [](sys::error_code error_code) { SPDLOG_DEBUG("add error: {}", error_code.message()); });
-            }));
+        net::co_spawn(executor, wrap(std::move(task)), std::move(completion_token));
     }
 
     net::awaitable<std::tuple<std::vector<uint64_t>, std::vector<std::exception_ptr>, std::vector<T>>> async_wait()
@@ -116,10 +114,17 @@ public:
         {
             sys::error_code ec;
             auto [order, exception, value] = co_await task_result_channel_->async_receive(await_error_code(ec));
+
             if (ec)
             {
-                cancel();
-                error_code = system_error::operation_canceled;
+                if (ec == net::experimental::error::channel_cancelled)
+                {
+                    error_code = system_error::operation_canceled;
+                }
+                else
+                {
+                    error_code = system_error::unhandled_system_error;
+                }
                 task_result_channel_ = nullptr;
                 break;
             }
@@ -135,32 +140,30 @@ public:
     }
 
 private:
-    std::shared_ptr<net::experimental::channel<Executor, void(sys::error_code, uint64_t, std::exception_ptr, wrap_type<T>)>> task_result_channel_;
+    std::shared_ptr<net::experimental::channel<void(sys::error_code, uint64_t, std::exception_ptr, wrap_type<T>)>> task_result_channel_;
 };
 
-template<typename Executor>
-class batch_task<void, Executor> : public batch_task_base
+template<>
+class batch_task<void> : public batch_task_base
 {
 public:
-    batch_task(Executor &executor)
-        : task_result_channel_(std::make_shared<net::experimental::channel<Executor, void(sys::error_code, uint64_t, std::exception_ptr)>>(executor))
-    {}
-
-public:
-    template<typename Executor1>
-    net::awaitable<void> add(net::awaitable<void, Executor1> task)
+    template<typename Executor>
+    net::awaitable<void> add(net::awaitable<void, Executor> task)
     {
         auto executor = co_await net::this_coro::executor;
-        auto order = pending_tasks_++;
+        if (task_result_channel_ == nullptr)
+        {
+            task_result_channel_ = std::make_shared<net::experimental::channel<void(sys::error_code, uint64_t, std::exception_ptr)>>(executor);
+        }
 
         auto cancellation_signal = std::make_shared<net::cancellation_signal>();
         cancellation_signals_.emplace_back(cancellation_signal);
 
-        auto chan = task_result_channel_;
+        auto completion_token = net::bind_cancellation_slot(
+            cancellation_signal->slot(), [chan = task_result_channel_, cancellation_signal, order = pending_tasks_++](
+                                             std::exception_ptr exception_ptr) { chan->async_send({}, order, exception_ptr, [](sys::error_code error_code) {}); });
 
-        net::co_spawn(executor, std::move(task), net::bind_cancellation_slot(cancellation_signal->slot(), [chan, cancellation_signal, order](std::exception_ptr exception_ptr) {
-            chan->async_send({}, order, exception_ptr, [](sys::error_code error_code) { SPDLOG_DEBUG("add error: {}", error_code.message()); });
-        }));
+        net::co_spawn(executor, std::move(task), std::move(completion_token));
     }
 
     net::awaitable<std::tuple<std::vector<uint64_t>, std::vector<std::exception_ptr>>> async_wait()
@@ -191,8 +194,14 @@ public:
             auto [order, exception] = co_await task_result_channel_->async_receive(await_error_code(ec));
             if (ec)
             {
-                cancel();
-                error_code = system_error::operation_canceled;
+                if (ec == net::experimental::error::channel_cancelled)
+                {
+                    error_code = system_error::operation_canceled;
+                }
+                else
+                {
+                    error_code = system_error::unhandled_system_error;
+                }
                 task_result_channel_ = nullptr;
                 break;
             }
@@ -207,7 +216,7 @@ public:
     }
 
 private:
-    std::shared_ptr<net::experimental::channel<Executor, void(sys::error_code, uint64_t, std::exception_ptr)>> task_result_channel_;
+    std::shared_ptr<net::experimental::channel<void(sys::error_code, uint64_t, std::exception_ptr)>> task_result_channel_;
 };
 
 } // namespace acc_engineer::rpc::detail

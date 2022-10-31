@@ -166,7 +166,7 @@ template<typename Message>
 net::awaitable<void> service::post_tcp(const rpc::request_t<Message> &request)
 {
     auto executor = co_await net::this_coro::executor;
-    rpc::batch_task<rpc::response_t<Message>> poster(executor);
+    rpc::batch_task<rpc::response_t<Message>> poster;
 
     for (auto &session : tcp_sessions_)
     {

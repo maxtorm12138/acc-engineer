@@ -30,7 +30,7 @@ net::awaitable<void> service::run()
     methods_.implement<Authentication>(std::bind(&service::authentication, this, _1, _2));
 
     auto executor = co_await net::this_coro::executor;
-    runner_ = std::make_unique<rpc::batch_task<void>>(executor);
+    runner_ = std::make_unique<rpc::batch_task<void>>();
 
     co_await runner_->add(udp_run());
     co_await runner_->add(tcp_run());
