@@ -7,13 +7,16 @@
 
 namespace net = boost::asio;
 
-net::awaitable<void> co_signal(std::shared_ptr<acc_engineer::service> service)
+net::awaitable<void> co_signal(std::weak_ptr<acc_engineer::service> weak_service)
 {
     auto executor = co_await net::this_coro::executor;
     net::signal_set signal_set(executor, SIGINT, SIGTERM);
     auto signal = co_await signal_set.async_wait(net::use_awaitable);
     SPDLOG_INFO("signal {}", signal);
-    co_await service->stop();
+    if (auto service = weak_service.lock(); service != nullptr)
+    {
+        service->cancel();
+    }
 }
 
 net::awaitable<void> co_main(int argc, char *argv[])
@@ -22,7 +25,7 @@ net::awaitable<void> co_main(int argc, char *argv[])
     auto config = acc_engineer::config::from_command_line(argc, argv);
     auto service = std::make_shared<acc_engineer::service>(config);
     net::co_spawn(executor, co_signal(service), net::detached);
-    co_await service->run();
+    co_await service->async_run();
 }
 
 int main(int argc, char *argv[])

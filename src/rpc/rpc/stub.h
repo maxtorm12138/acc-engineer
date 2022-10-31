@@ -6,12 +6,13 @@
 
 namespace acc_engineer::rpc {
 
-namespace net = boost::asio;
+using detail::channel_packet_handler;
+using detail::tcp_packet_handler;
+using detail::udp_packet_handler;
 
-using tcp_packet_handler = detail::tcp_packet_handler;
-using udp_packet_handler = detail::udp_packet_handler;
-using tcp_stub = detail::stub<detail::tcp_packet_handler>;
-using udp_stub = detail::stub<detail::udp_packet_handler>;
+using tcp_stub = detail::stub<tcp_packet_handler>;
+using udp_stub = detail::stub<udp_packet_handler>;
+using channel_stub = detail::stub<channel_packet_handler>;
 
 } // namespace acc_engineer::rpc
 

@@ -43,16 +43,28 @@ enum flags
 constexpr size_t MAX_IO_CHANNEL_BUFFER_SIZE = 100;
 constexpr size_t MAX_WORKER_SIZE = 10;
 
+inline uint64_t generate_trace_id()
+{
+    static std::atomic<uint64_t> stub_id_max_{1};
+    return stub_id_max_++;
+}
+
+inline uint64_t generate_stub_id()
+{
+    static std::atomic<uint64_t> trace_id_max_{1};
+    return trace_id_max_++;
+}
+
 template<typename PacketHandler>
 class stub : public std::enable_shared_from_this<stub<PacketHandler>>, public boost::noncopyable
 {
 public:
-    using method_channel_type = typename PacketHandler::method_channel_type;
+    using packet_handler_type = PacketHandler;
     using input_channel_type = net::experimental::channel<void(sys::error_code, std::vector<uint8_t>)>;
     using output_channel_type = net::experimental::channel<void(sys::error_code, std::vector<uint8_t>)>;
     using calling_channel_type = net::experimental::channel<void(sys::error_code, std::vector<uint8_t>)>;
 
-    static std::shared_ptr<stub<PacketHandler>> create(method_channel_type method_channel, const methods &methods = methods::empty());
+    static std::shared_ptr<stub<PacketHandler>> create(packet_handler_type packet_handler, const methods &methods = methods::empty());
 
     ~stub();
 
@@ -60,15 +72,15 @@ public:
 
     net::awaitable<void> stop();
 
-    net::awaitable<void> deliver(std::vector<uint8_t> packet);
-
     template<is_method_message MethodMessage>
     net::awaitable<response_t<MethodMessage>> async_call(const request_t<MethodMessage> &request);
 
     uint64_t id() const noexcept;
 
+    packet_handler_type &packet_handler() noexcept;
+
 private:
-    explicit stub(method_channel_type method_channel, const methods &methods = methods::empty());
+    explicit stub(packet_handler_type packet_handler, const methods &methods = methods::empty());
 
     net::awaitable<void> input_loop();
 
@@ -83,7 +95,7 @@ private:
     std::vector<uint8_t> pack(uint64_t command_id, std::bitset<64> flags, rpc::Cookie cookie, const google::protobuf::Message &message);
 
 private:
-    method_channel_type method_channel_;
+    packet_handler_type packet_handler_;
     input_channel_type input_channel_;
     output_channel_type output_channel_;
     std::unordered_map<uint64_t, std::optional<calling_channel_type>> calling_channel_;
@@ -91,26 +103,22 @@ private:
     const methods &methods_;
     const uint64_t id_;
     std::unique_ptr<batch_task<void>> runner_;
-
-private:
-    static std::atomic<uint64_t> stub_id_max_;
-    static std::atomic<uint64_t> trace_id_max_;
 };
 
 template<typename PacketHandler>
-std::shared_ptr<stub<PacketHandler>> stub<PacketHandler>::create(typename stub<PacketHandler>::method_channel_type method_channel, const methods &methods)
+std::shared_ptr<stub<PacketHandler>> stub<PacketHandler>::create(typename stub<PacketHandler>::packet_handler_type packet_handler, const methods &methods)
 {
-    return std::shared_ptr<stub<PacketHandler>>(new stub<PacketHandler>(std::move(method_channel), methods));
+    return std::shared_ptr<stub<PacketHandler>>(new stub<PacketHandler>(std::move(packet_handler), methods));
 }
 
 template<typename PacketHandler>
-stub<PacketHandler>::stub(method_channel_type method_channel, const methods &methods)
-    : method_channel_(std::move(method_channel))
-    , input_channel_(method_channel_.get_executor(), MAX_IO_CHANNEL_BUFFER_SIZE)
-    , output_channel_(method_channel_.get_executor(), MAX_IO_CHANNEL_BUFFER_SIZE)
+stub<PacketHandler>::stub(packet_handler_type packet_handler, const methods &methods)
+    : packet_handler_(std::move(packet_handler))
+    , input_channel_(packet_handler.get_executor(), MAX_IO_CHANNEL_BUFFER_SIZE)
+    , output_channel_(packet_handler.get_executor(), MAX_IO_CHANNEL_BUFFER_SIZE)
     , status_(stub_status::idle)
     , methods_(methods)
-    , id_(stub_id_max_++)
+    , id_(generate_stub_id())
 {}
 
 template<typename PacketHandler>
@@ -150,15 +158,9 @@ net::awaitable<void> stub<PacketHandler>::stop()
     {
         SPDLOG_TRACE("stub {} stopping", id_);
         status_ = stub_status::stopping;
+        runner_->cancel();
     }
     co_return;
-}
-
-template<typename PacketHandler>
-net::awaitable<void> stub<PacketHandler>::deliver(std::vector<uint8_t> packet)
-{
-    sys::error_code error_code;
-    co_await input_channel_.async_send({}, packet, await_error_code(error_code));
 }
 
 template<typename PacketHandler>
@@ -168,7 +170,7 @@ net::awaitable<response_t<MethodMessage>> stub<PacketHandler>::async_call(const 
     uint64_t command_id = MethodMessage::descriptor()->options().GetExtension(rpc::cmd_id);
 
     bool no_reply = MethodMessage::descriptor()->options().GetExtension(rpc::no_reply);
-    uint64_t trace_id = trace_id_max_++;
+    uint64_t trace_id = generate_trace_id();
     std::bitset<64> flags;
     flags.set(flag_is_request).set(flag_no_reply, no_reply);
 
@@ -249,6 +251,12 @@ uint64_t stub<PacketHandler>::id() const noexcept
 }
 
 template<typename PacketHandler>
+typename stub<PacketHandler>::packet_handler_type &stub<PacketHandler>::packet_handler() noexcept
+{
+    return packet_handler_;
+}
+
+template<typename PacketHandler>
 net::awaitable<void> stub<PacketHandler>::input_loop()
 {
     std::vector<uint8_t> receive_buffer(PacketHandler::MAX_PACKET_SIZE);
@@ -256,7 +264,7 @@ net::awaitable<void> stub<PacketHandler>::input_loop()
     while (status_ == stub_status::running)
     {
         sys::error_code error_code;
-        error_code = co_await PacketHandler::receive_packet(method_channel_, receive_buffer);
+        error_code = co_await packet_handler_.receive_packet(receive_buffer);
         if (error_code)
         {
             if (error_code == system_error::operation_canceled)
@@ -308,7 +316,7 @@ net::awaitable<void> stub<PacketHandler>::output_loop()
             break;
         }
 
-        error_code = co_await PacketHandler::send_packet(method_channel_, std::move(send_buffer));
+        error_code = co_await packet_handler_.send_packet(std::move(send_buffer));
         if (error_code)
         {
             if (error_code == system_error::operation_canceled)
@@ -490,12 +498,6 @@ std::vector<uint8_t> stub<PacketHandler>::pack(uint64_t command_id, std::bitset<
 
     return pack(command_id, flags, std::move(cookie), std::move(message_payload));
 }
-
-template<typename PacketHandler>
-std::atomic<uint64_t> stub<PacketHandler>::stub_id_max_{1};
-
-template<typename PacketHandler>
-std::atomic<uint64_t> stub<PacketHandler>::trace_id_max_{1};
 
 } // namespace acc_engineer::rpc::detail
 

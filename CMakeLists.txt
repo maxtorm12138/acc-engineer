@@ -163,5 +163,6 @@ function(ADD_ACC_ENGINEER_TEST)
 endfunction()
 
 if (ACC_ENGINEER_BUILD_TESTS)
-    ADD_ACC_ENGINEER_TEST(NAME test_batch_task FILES test/test_batch_task.cpp ${SERVICE_PROTO_FILES})
+    ADD_ACC_ENGINEER_TEST(NAME test_batch_task FILES test/test_batch_task.cpp)
+    ADD_ACC_ENGINEER_TEST(NAME test_client FILES test/test_client.cpp ${ACC_ENGINEER_SERVICE_PROTO_FILES})
 endif()
