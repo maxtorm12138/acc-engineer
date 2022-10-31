@@ -102,6 +102,10 @@ if (WIN32 AND ACC_ENGINEER_BUILD_CLIENT)
         client/src/ui/driver_input.h
         client/src/ui/main_window.cpp
         client/src/ui/main_window.h
+        client/src/ui/telemetry.cpp
+        client/src/ui/telemetry.h
+        client/src/ui/telemetry_tyre.cpp
+        client/src/ui/telemetry_tyre.h
         client/src/logic.cpp
         client/src/logic.h
         client/src/app.cpp

@@ -18,6 +18,7 @@
 #include "ui/connect.h"
 #include "ui/main_window.h"
 #include "ui/driver_input.h"
+#include "ui/telemetry.h"
 
 namespace acc_engineer {
 namespace net = boost::asio;
@@ -50,6 +51,7 @@ private:
     ui::connect *connect_;
     ui::main_window *main_window_;
     ui::driver_input *driver_input_;
+    ui::telemetry *telemetry_;
 };
 } // namespace acc_engineer
 #endif

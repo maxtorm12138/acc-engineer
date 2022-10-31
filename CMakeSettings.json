@@ -7,7 +7,7 @@
       "inheritEnvironments": [ "msvc_x64_x64" ],
       "buildRoot": "${projectDir}\\out\\build\\${name}",
       "installRoot": "${projectDir}\\out\\install\\${name}",
-      "cmakeCommandArgs": "-DCMAKE_PREFIX_PATH=C:\\Qt\\6.2.4\\msvc2019_64;E:\\Library_Debug -DACC_ENGINEER_LOG_LEVEL=1 -DACC_ENGINEER_BUILD_CLIENT=1 -DQWT_LIBRARY_DIR=E:\\Library_Debug\\lib",
+      "cmakeCommandArgs": "-DCMAKE_PREFIX_PATH=C:\\Qt\\6.2.4\\msvc2019_64;E:\\Library_Debug -DACC_ENGINEER_LOG_LEVEL=1 -DACC_ENGINEER_BUILD_CLIENT=1 -DACC_ENGINEER_BUILD_SERVER=1 -DACC_ENGINEER_BUILD_TESTS=1 -DQWT_LIBRARY_DIR=E:\\Library_Debug\\lib",
       "buildCommandArgs": "",
       "ctestCommandArgs": ""
     }

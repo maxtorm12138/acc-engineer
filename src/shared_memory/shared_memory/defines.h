@@ -103,14 +103,6 @@ enum class acc_rain_intensity : int
     thunderstorm = 5,
 };
 
-struct car_spec
-{
-    std::string_view kunuos_id;
-    std::string_view name;
-    int brake_bias;
-    int max_rpm;
-};
-
 #pragma pack(push)
 #pragma pack(4)
 
