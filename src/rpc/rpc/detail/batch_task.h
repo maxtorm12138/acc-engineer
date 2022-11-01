@@ -120,7 +120,6 @@ public:
 
             if (ec)
             {
-                cancel();
                 if (ec == net::experimental::error::channel_cancelled)
                 {
                     error_code = system_error::operation_canceled;
@@ -130,6 +129,7 @@ public:
                     error_code = system_error::unhandled_system_error;
                 }
                 task_result_channel_ = nullptr;
+                cancel();
                 break;
             }
 
@@ -211,6 +211,7 @@ public:
                     error_code = system_error::unhandled_system_error;
                 }
                 task_result_channel_ = nullptr;
+                cancel();
                 break;
             }
 

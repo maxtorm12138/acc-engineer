@@ -41,7 +41,6 @@ enum flags
 };
 
 constexpr size_t MAX_IO_CHANNEL_BUFFER_SIZE = 100;
-constexpr size_t MAX_WORKER_SIZE = 10;
 
 inline uint64_t generate_trace_id()
 {
@@ -68,9 +67,9 @@ public:
 
     ~stub();
 
-    net::awaitable<void> run();
+    net::awaitable<void> async_run();
 
-    net::awaitable<void> stop();
+    void cancel();
 
     template<is_method_message MethodMessage>
     net::awaitable<response_t<MethodMessage>> async_call(const request_t<MethodMessage> &request);
@@ -128,7 +127,7 @@ stub<PacketHandler>::~stub()
 }
 
 template<typename PacketHandler>
-net::awaitable<void> stub<PacketHandler>::run()
+net::awaitable<void> stub<PacketHandler>::async_run()
 {
     auto executor = co_await net::this_coro::executor;
     runner_ = std::make_unique<batch_task<void>>();
@@ -142,17 +141,12 @@ net::awaitable<void> stub<PacketHandler>::run()
     co_await runner_->add(input_loop());
     co_await runner_->add(output_loop());
 
-    for (int i = 0; i < MAX_WORKER_SIZE; i++)
-    {
-        co_await runner_->add(worker_loop(i));
-    }
-
     sys::error_code error_code;
-    auto [order, exceptions] = co_await runner_->async_wait(error_code);
+    auto [order, exceptions] = co_await runner_->async_wait(net::experimental::wait_for_one_error(), error_code);
 }
 
 template<typename PacketHandler>
-net::awaitable<void> stub<PacketHandler>::stop()
+void stub<PacketHandler>::cancel()
 {
     if (status_ == stub_status::running)
     {
@@ -191,19 +185,17 @@ net::awaitable<response_t<MethodMessage>> stub<PacketHandler>::async_call(const 
     sys::error_code error_code;
     co_await output_channel_.async_send({}, std::move(packet), await_error_code(error_code));
     SPDLOG_TRACE("async_call {} output_channel: {}", id_, error_code.message());
-
-    if (error_code == net::experimental::error::channel_closed)
-    {
-        throw sys::system_error(system_error::connection_closed);
-    }
-
-    if (error_code == net::experimental::error::channel_cancelled)
-    {
-        throw sys::system_error(system_error::connection_closed);
-    }
-
     if (error_code)
     {
+        if (error_code == net::experimental::error::channel_closed)
+        {
+            throw sys::system_error(system_error::connection_closed);
+        }
+
+        if (error_code == net::experimental::error::channel_cancelled)
+        {
+            throw sys::system_error(system_error::connection_closed);
+        }
         throw sys::system_error(system_error::unhandled_system_error);
     }
 
@@ -214,24 +206,23 @@ net::awaitable<response_t<MethodMessage>> stub<PacketHandler>::async_call(const 
 
     auto response_payload = co_await calling_channel_[trace_id]->async_receive(await_error_code(error_code));
     SPDLOG_TRACE("async_call {} calling_channel: {}", id_, error_code.message());
-
-    if (error_code == net::experimental::error::channel_closed)
-    {
-        throw sys::system_error(system_error::connection_closed);
-    }
-
-    if (error_code == net::experimental::error::channel_cancelled)
-    {
-        throw sys::system_error(system_error::connection_closed);
-    }
-
-    if (error_code && error_code.category() == system_error_category())
-    {
-        throw sys::system_error(error_code);
-    }
-
     if (error_code)
     {
+        if (error_code == net::experimental::error::channel_closed)
+        {
+            throw sys::system_error(system_error::connection_closed);
+        }
+
+        if (error_code == net::experimental::error::channel_cancelled)
+        {
+            throw sys::system_error(system_error::connection_closed);
+        }
+
+        if (error_code.category() == system_error_category())
+        {
+            throw sys::system_error(error_code);
+        }
+
         throw sys::system_error(system_error::unhandled_system_error);
     }
 
@@ -269,30 +260,43 @@ net::awaitable<void> stub<PacketHandler>::input_loop()
         {
             if (error_code == system_error::operation_canceled)
             {
-                SPDLOG_TRACE("input_loop {} PacketHandler::receive_packet system_error: {}", id_, error_code.message());
+                SPDLOG_INFO("input_loop {} PacketHandler::receive_packet system_error: {}", id_, error_code.message());
             }
             else
             {
                 SPDLOG_ERROR("input_loop {} PacketHandler::receive_packet system_error: {}", id_, error_code.message());
             }
-            break;
+            throw sys::system_error(error_code);
         }
 
-        co_await input_channel_.async_send({}, receive_buffer, await_error_code(error_code));
-        if (error_code)
+        auto [command_id, flags, cookie, payload] = unpack(receive_buffer);
+
+        if (!flags.test(flag_is_request))
         {
-            if (error_code == net::experimental::error::channel_cancelled)
+            if (!calling_channel_.contains(cookie.trace_id()))
             {
-                SPDLOG_TRACE("input_loop {} input_channel_.async_send system_error: {}", id_, error_code.message());
+                SPDLOG_INFO("input_loop {} response message {} outdated", id_, cookie.trace_id());
+                continue;
             }
-            else
+            auto &calling = calling_channel_[cookie.trace_id()];
+
+            co_await calling->async_send(static_cast<system_error>(cookie.error_code()), std::vector(payload.begin(), payload.end()), await_error_code(error_code));
+            if (error_code)
             {
-                SPDLOG_ERROR("input_loop {} input_channel_.async_send system_error: {}", id_, error_code.message());
+                if (error_code == net::experimental::error::channel_cancelled)
+                {
+                    error_code = system_error::operation_canceled;
+                    SPDLOG_INFO("input_loop {} calling->async_send {} system_error: {}", id_, cookie.trace_id(), error_code.message());
+                }
+                else
+                {
+                    error_code = system_error::unhandled_system_error;
+                    SPDLOG_ERROR("input_loop {} calling->async_send {} system_error: {}", id_, cookie.trace_id(), error_code.message());
+                }
+                throw sys::system_error(error_code);
             }
-            break;
         }
     }
-    SPDLOG_TRACE("input_loop {} stopped", id_);
 }
 
 template<typename PacketHandler>
@@ -337,6 +341,15 @@ template<typename PacketHandler>
 net::awaitable<void> stub<PacketHandler>::worker_loop(uint64_t worker_id)
 {
     SPDLOG_TRACE("worker_loop {}:{} started", id_, worker_id);
+
+    BOOST_SCOPE_EXIT_ALL(&)
+    {
+        for (auto &calling : calling_channel_)
+        {
+            calling.second->cancel();
+        }
+    };
+
     while (status_ == stub_status::running)
     {
         sys::error_code error_code;
