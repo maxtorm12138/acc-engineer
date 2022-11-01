@@ -56,7 +56,7 @@ net::awaitable<void> cancel_job()
     using namespace std::chrono_literals;
     net::steady_timer timer(co_await net::this_coro::executor);
     auto random_ms = (rand() % 10000) + 100000;
-    spdlog::info("long_time_job {} started pause {} ms", N, random_ms);
+    spdlog::info("cancel_job {} started pause {} ms", N, random_ms);
     timer.expires_after(std::chrono::milliseconds(random_ms));
 
     co_await timer.async_wait(net::use_awaitable);
@@ -131,8 +131,36 @@ net::awaitable<void> run_void_job()
     co_await batch_task.add(void_job<2>());
     co_await batch_task.add(void_job<3>());
 
-    auto [order, exceptions] = co_await batch_task.async_wait();
+    auto [order, exceptions] = co_await batch_task.async_wait(net::experimental::wait_for_all());
     spdlog::info("void job end");
+}
+
+net::awaitable<void> run_one_void_job()
+{
+    auto executor = co_await net::this_coro::executor;
+    rpc::batch_task<void> batch_task;
+    co_await batch_task.add(void_job<0>());
+    co_await batch_task.add(void_job<1>());
+    co_await batch_task.add(void_job<2>());
+    co_await batch_task.add(void_job<3>());
+
+    auto [order, exceptions] = co_await batch_task.async_wait(net::experimental::wait_for_one());
+    for (int i = 0; i < order.size(); i++)
+    {
+        try
+        {
+            if (exceptions[i] != nullptr)
+            {
+                std::rethrow_exception(exceptions[i]);
+            }
+            spdlog::info("one_void_job {} no exception", order[i]);
+        }
+        catch (sys::system_error &ex)
+        {
+            spdlog::info("one_void_job {} system_error {}", order[i], ex.what());
+        }
+    }
+    spdlog::info("one void job end");
 }
 
 net::awaitable<void> run_cancel_job()
@@ -145,7 +173,7 @@ net::awaitable<void> run_cancel_job()
     co_await batch_task.add(cancel_job<3>());
 
     net::co_spawn(executor, cancel_job_canceller(batch_task), net::detached);
-    auto [order, exceptions] = co_await batch_task.async_wait();
+    auto [order, exceptions] = co_await batch_task.async_wait(net::experimental::wait_for_all());
     for (int i = 0; i < order.size(); i++)
     {
         try
@@ -175,7 +203,7 @@ net::awaitable<void> run_value_job()
     co_await batch_task.add(value_job<2>());
     co_await batch_task.add(value_job<3>());
 
-    auto [order, exceptions, values] = co_await batch_task.async_wait();
+    auto [order, exceptions, values] = co_await batch_task.async_wait(net::experimental::wait_for_all());
 
     std::string value_str = "[";
     for (auto value : values)
@@ -198,7 +226,7 @@ net::awaitable<void> run_move_only_job()
     co_await batch_task.add(move_only_job<2>());
     co_await batch_task.add(move_only_job<3>());
 
-    auto [order, exceptions, values] = co_await batch_task.async_wait();
+    auto [order, exceptions, values] = co_await batch_task.async_wait(net::experimental::wait_for_all());
 
     std::string value_str = "[";
     for (const auto &value : values)
@@ -215,6 +243,8 @@ net::awaitable<void> co_main()
 {
     spdlog::info("-------------");
     co_await run_void_job();
+    spdlog::info("-------------");
+    co_await run_one_void_job();
     spdlog::info("-------------");
     co_await run_value_job();
     spdlog::info("-------------");

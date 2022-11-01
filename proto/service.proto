@@ -31,6 +31,7 @@ message Authentication
   message Response
   {
     uint64 driver_id = 2;
+    string ticket = 3;
 
     int64 error_code = 100;
     string error_message = 101;

@@ -13,6 +13,7 @@
 #include <boost/asio/experimental/channel.hpp>
 #include <boost/scope_exit.hpp>
 #include <boost/noncopyable.hpp>
+#include <boost/asio/experimental/cancellation_condition.hpp>
 
 // spdlog
 #include <spdlog/spdlog.h>
@@ -27,7 +28,7 @@ namespace sys = boost::system;
 class batch_task_base : public boost::noncopyable
 {
 public:
-    void cancel();
+    void cancel(net::cancellation_type type = net::cancellation_type::all);
 
 protected:
     template<typename T>
@@ -86,10 +87,11 @@ public:
         net::co_spawn(executor, wrap(std::move(task)), std::move(completion_token));
     }
 
-    net::awaitable<std::tuple<std::vector<uint64_t>, std::vector<std::exception_ptr>, std::vector<T>>> async_wait()
+    template<typename CancellationCondition>
+    net::awaitable<std::tuple<std::vector<uint64_t>, std::vector<std::exception_ptr>, std::vector<T>>> async_wait(CancellationCondition condition)
     {
         sys::error_code error_code;
-        auto result = co_await async_wait(error_code);
+        auto result = co_await async_wait(std::move(condition), error_code);
         if (error_code)
         {
             throw sys::system_error(error_code);
@@ -98,7 +100,8 @@ public:
         co_return result;
     }
 
-    net::awaitable<std::tuple<std::vector<uint64_t>, std::vector<std::exception_ptr>, std::vector<T>>> async_wait(sys::error_code &error_code)
+    template<typename CancellationCondition>
+    net::awaitable<std::tuple<std::vector<uint64_t>, std::vector<std::exception_ptr>, std::vector<T>>> async_wait(CancellationCondition condition, sys::error_code &error_code)
     {
         auto calcelation = co_await net::this_coro::cancellation_state;
         std::vector<uint64_t> completion_order;
@@ -117,6 +120,7 @@ public:
 
             if (ec)
             {
+                cancel();
                 if (ec == net::experimental::error::channel_cancelled)
                 {
                     error_code = system_error::operation_canceled;
@@ -128,6 +132,8 @@ public:
                 task_result_channel_ = nullptr;
                 break;
             }
+
+            cancel(condition(exception));
 
             completion_order.emplace_back(order);
             completion_exceptions.emplace_back(exception);
@@ -166,10 +172,11 @@ public:
         net::co_spawn(executor, std::move(task), std::move(completion_token));
     }
 
-    net::awaitable<std::tuple<std::vector<uint64_t>, std::vector<std::exception_ptr>>> async_wait()
+    template<typename CancellationCondition>
+    net::awaitable<std::tuple<std::vector<uint64_t>, std::vector<std::exception_ptr>>> async_wait(CancellationCondition condition)
     {
         sys::error_code error_code;
-        auto result = co_await async_wait(error_code);
+        auto result = co_await async_wait(std::move(condition), error_code);
         if (error_code)
         {
             throw sys::system_error(error_code);
@@ -178,7 +185,8 @@ public:
         co_return result;
     }
 
-    net::awaitable<std::tuple<std::vector<uint64_t>, std::vector<std::exception_ptr>>> async_wait(sys::error_code &error_code)
+    template<typename CancellationCondition>
+    net::awaitable<std::tuple<std::vector<uint64_t>, std::vector<std::exception_ptr>>> async_wait(CancellationCondition condition, sys::error_code &error_code)
     {
         std::vector<uint64_t> completion_order;
         std::vector<std::exception_ptr> completion_exceptions;
@@ -205,6 +213,8 @@ public:
                 task_result_channel_ = nullptr;
                 break;
             }
+
+            cancel(condition(exception));
 
             completion_order.emplace_back(order);
             completion_exceptions.emplace_back(exception);
