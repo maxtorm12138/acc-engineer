@@ -57,7 +57,8 @@ private:
     net::awaitable<void> new_udp_connection(net::ip::udp::socket &acceptor, net::ip::udp::endpoint remote, std::vector<uint8_t> initial);
 
     template<typename Message>
-    net::awaitable<void> post(const rpc::request_t<Message> &request);
+    net::awaitable<void> post(
+        const rpc::request_t<Message> &request, std::function<bool(const tcp_session &)> filter = [](auto &) { return true; });
 
     template<typename Message>
     net::awaitable<void> broadcast(const rpc::request_t<Message> &request);
@@ -74,14 +75,14 @@ private:
 };
 
 template<typename Message>
-net::awaitable<void> service::post(const rpc::request_t<Message> &request)
+net::awaitable<void> service::post(const rpc::request_t<Message> &request, std::function<bool(const tcp_session &)> filter)
 {
     auto executor = co_await net::this_coro::executor;
     auto runner = rpc::batch_task<rpc::response_t<Message>>::create();
 
     for (auto &session : tcp_session_manager_.authened())
     {
-        if (auto stub = session.stub.lock(); stub != nullptr)
+        if (auto stub = session.stub.lock(); stub != nullptr && filter(session))
         {
             co_await runner->add(stub->async_call<Message>(request));
         }
