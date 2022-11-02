@@ -186,9 +186,12 @@ net::awaitable<void> service::new_tcp_connection(net::ip::tcp::socket socket)
         DriverUpdate::Request driver_update_request;
         for (auto &session : tcp_session_manager_.authened())
         {
-            auto driver = driver_update_request.add_drivers();
-            driver->set_driver_id(session.driver_id);
-            driver->set_driver_name(session.driver_name);
+            if (session.id != stub_id)
+            {
+                auto driver = driver_update_request.add_drivers();
+                driver->set_driver_id(session.driver_id);
+                driver->set_driver_name(session.driver_name);
+            }
         }
 
         co_await post<DriverUpdate>(driver_update_request, [stub_id](auto &session) { return session.id != stub_id; });
@@ -341,12 +344,9 @@ net::awaitable<AuthenticationTCP::Response> service::authentication_tcp(const rp
     DriverUpdate::Request driver_update_request;
     for (auto &session : tcp_session_manager_.authened())
     {
-        if (session.id != driver_id)
-        {
-            auto driver = driver_update_request.add_drivers();
-            driver->set_driver_id(session.driver_id);
-            driver->set_driver_name(session.driver_name);
-        }
+        auto driver = driver_update_request.add_drivers();
+        driver->set_driver_id(session.driver_id);
+        driver->set_driver_name(session.driver_name);
     }
 
     co_await post<DriverUpdate>(driver_update_request);
