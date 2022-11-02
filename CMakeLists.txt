@@ -106,8 +106,8 @@ if (WIN32 AND ACC_ENGINEER_BUILD_CLIENT)
         client/src/ui/telemetry.h
         client/src/ui/telemetry_tyre.cpp
         client/src/ui/telemetry_tyre.h
-        client/src/logic.cpp
-        client/src/logic.h
+        client/src/logic/logic.cpp
+        client/src/logic/logic.h
         client/src/app.cpp
         client/src/app.h
     )

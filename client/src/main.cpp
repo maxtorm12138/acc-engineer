@@ -59,7 +59,6 @@ int main(int argc, char *argv[])
 {
     spdlog::set_level(spdlog::level::trace);
     QApplication app(argc, argv);
-    QObject::connect(&app, &QGuiApplication::lastWindowClosed, &app, &QApplication::quit);
 
     acc_engineer::app my_app(&app);
     my_app.start();

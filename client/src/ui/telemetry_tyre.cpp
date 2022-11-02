@@ -18,15 +18,19 @@ void telemetry_tyre::set_type(tyre_type type)
 	{
 	case tyre_type::FrontLeft: 
 		ui_->TyrePressureFrame->setLayoutDirection(Qt::LayoutDirection::LeftToRight);
+        ui_->TyreNameLabel->setText(tr("FrontLeft"));
 		break;
 	case tyre_type::FrontRight: 
 		ui_->TyrePressureFrame->setLayoutDirection(Qt::LayoutDirection::RightToLeft);
+        ui_->TyreNameLabel->setText(tr("FrontRight"));
 		break;
 	case tyre_type::RearLeft: 
 		ui_->TyrePressureFrame->setLayoutDirection(Qt::LayoutDirection::LeftToRight);
+		ui_->TyreNameLabel->setText(tr("RearLeft"));
 		break;
 	case tyre_type::RearRight: 
 		ui_->TyrePressureFrame->setLayoutDirection(Qt::LayoutDirection::RightToLeft);
+		ui_->TyreNameLabel->setText(tr("RearRight"));
 		break;
 	default: ;
 	}

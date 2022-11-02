@@ -15,7 +15,7 @@ namespace boost {
 template<>
 struct hash<boost::asio::ip::udp::endpoint>
 {
-    constexpr size_t operator()(const boost::asio::ip::udp::endpoint &ep) const noexcept
+    size_t operator()(const boost::asio::ip::udp::endpoint &ep) const noexcept
     {
         return std::hash<boost::asio::ip::udp::endpoint>{}(ep);
     }

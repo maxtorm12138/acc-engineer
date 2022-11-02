@@ -6,26 +6,26 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>980</width>
-    <height>480</height>
+    <width>1000</width>
+    <height>500</height>
    </rect>
   </property>
   <property name="sizePolicy">
-   <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
     <horstretch>0</horstretch>
     <verstretch>0</verstretch>
    </sizepolicy>
   </property>
   <property name="minimumSize">
    <size>
-    <width>980</width>
-    <height>480</height>
+    <width>1000</width>
+    <height>500</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
-    <width>1280</width>
-    <height>720</height>
+    <width>1000</width>
+    <height>654</height>
    </size>
   </property>
   <property name="font">
@@ -36,7 +36,7 @@
    </font>
   </property>
   <property name="windowTitle">
-   <string>DriverInput</string>
+   <string>ACC Engineer driver input</string>
   </property>
   <property name="styleSheet">
    <string notr="true">background-color: rgb(76, 76, 76);
@@ -48,113 +48,172 @@ font: 16px;</string>
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="0,3">
    <item>
-    <widget class="QFrame" name="DriverInfoFrame">
+    <widget class="QFrame" name="CarInfoFrame">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>100</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>300</width>
+       <height>16777215</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">font-size: 12px
+</string>
+     </property>
      <property name="frameShape">
       <enum>QFrame::StyledPanel</enum>
      </property>
      <property name="frameShadow">
       <enum>QFrame::Raised</enum>
      </property>
-     <layout class="QVBoxLayout" name="verticalLayout_2">
-      <item>
-       <widget class="QFrame" name="CarInfoFrame">
+     <layout class="QFormLayout" name="formLayout">
+      <property name="horizontalSpacing">
+       <number>0</number>
+      </property>
+      <property name="verticalSpacing">
+       <number>10</number>
+      </property>
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
+      <item row="0" column="0">
+       <widget class="QLabel" name="ThrottleLabel">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
         <property name="minimumSize">
          <size>
-          <width>100</width>
+          <width>0</width>
           <height>0</height>
          </size>
         </property>
-        <property name="maximumSize">
+        <property name="text">
+         <string>Throttle</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QProgressBar" name="ThrottleProgressBar">
+        <property name="styleSheet">
+         <string notr="true">QProgressBar {
+     border: 2px solid grey;
+     border-radius: 5px;
+     background-color: rgb(120, 120, 120);
+ }
+
+QProgressBar::chunk {
+     background-color: rgba(0, 254, 0, 180);
+ }</string>
+        </property>
+        <property name="value">
+         <number>0</number>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+        <property name="format">
+         <string>Not Driving</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="TCInACtionLabel">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
          <size>
-          <width>300</width>
-          <height>16777215</height>
+          <width>0</width>
+          <height>0</height>
          </size>
         </property>
+        <property name="text">
+         <string>TC Active</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QProgressBar" name="TCInActionProgressBar">
         <property name="styleSheet">
-         <string notr="true">font-size: 12px
-</string>
+         <string notr="true">QProgressBar {
+     border: 2px solid grey;
+     border-radius: 5px;
+     background-color: rgb(120, 120, 120);
+ }
+
+QProgressBar::chunk {
+     background-color: rgba(0, 254, 0, 180);
+ }</string>
         </property>
-        <property name="frameShape">
-         <enum>QFrame::StyledPanel</enum>
+        <property name="value">
+         <number>0</number>
         </property>
-        <property name="frameShadow">
-         <enum>QFrame::Raised</enum>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
         </property>
-        <layout class="QGridLayout" name="gridLayout" columnstretch="50,0">
-         <item row="7" column="0">
-          <widget class="QLabel" name="GearHintLabel">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string>Gear</string>
-           </property>
-          </widget>
-         </item>
-         <item row="5" column="0">
-          <widget class="QLabel" name="SteeringLabel">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="text">
-            <string>Steering</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item row="8" column="1">
-          <widget class="QLabel" name="SpeedLabel">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string>Not Driving</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item row="10" column="1">
-          <widget class="QLabel" name="TCLabel">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string>Not Driving</string>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="1">
-          <widget class="QProgressBar" name="BrakeProgressBar">
-           <property name="styleSheet">
-            <string notr="true">QProgressBar {
+        <property name="format">
+         <string>Not Driving</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="BrakeLabel">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>Brake</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QProgressBar" name="BrakeProgressBar">
+        <property name="styleSheet">
+         <string notr="true">QProgressBar {
      border: 2px solid grey;
      border-radius: 5px;
      background-color: rgb(120, 120, 120);
@@ -163,29 +222,44 @@ font: 16px;</string>
 QProgressBar::chunk {
      background-color: rgba(255, 0, 0, 180);
  }</string>
-           </property>
-           <property name="value">
-            <number>0</number>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-           <property name="format">
-            <string notr="true">Not Driving</string>
-           </property>
-          </widget>
-         </item>
-         <item row="11" column="1">
-          <widget class="QLabel" name="TC2Label">
-           <property name="text">
-            <string>Not Driving</string>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="1">
-          <widget class="QProgressBar" name="TCInActionProgressBar">
-           <property name="styleSheet">
-            <string notr="true">QProgressBar {
+        </property>
+        <property name="value">
+         <number>0</number>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+        <property name="format">
+         <string notr="true">Not Driving</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="ABSInActionLabel">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>100</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>ABS Active</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QProgressBar" name="ABSInActionProgressBar">
+        <property name="styleSheet">
+         <string notr="true">QProgressBar {
      border: 2px solid grey;
      border-radius: 5px;
      background-color: rgb(120, 120, 120);
@@ -194,57 +268,44 @@ QProgressBar::chunk {
 QProgressBar::chunk {
      background-color: rgba(0, 254, 0, 180);
  }</string>
-           </property>
-           <property name="value">
-            <number>0</number>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-           <property name="format">
-            <string>Not Driving</string>
-           </property>
-          </widget>
-         </item>
-         <item row="11" column="0">
-          <widget class="QLabel" name="TC2HintLabel">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string>TC 2</string>
-           </property>
-          </widget>
-         </item>
-         <item row="4" column="0">
-          <widget class="QLabel" name="ABSInActionLabel">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-             <horstretch>100</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="text">
-            <string>ABS Active</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item row="5" column="1">
-          <widget class="QProgressBar" name="SteeringProgressBar">
-           <property name="styleSheet">
-            <string notr="true">QProgressBar {
+        </property>
+        <property name="value">
+         <number>0</number>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+        <property name="format">
+         <string>Not Driving</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QLabel" name="SteeringLabel">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>Steering</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1">
+       <widget class="QProgressBar" name="SteeringProgressBar">
+        <property name="styleSheet">
+         <string notr="true">QProgressBar {
      border: 2px solid grey;
      border-radius: 5px;
      background-color: rgb(120, 120, 120);
@@ -253,253 +314,198 @@ QProgressBar::chunk {
 QProgressBar::chunk {
      background-color:  rgba(251, 255, 0, 180);
  }</string>
-           </property>
-           <property name="minimum">
-            <number>-500</number>
-           </property>
-           <property name="maximum">
-            <number>500</number>
-           </property>
-           <property name="value">
-            <number>0</number>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-           <property name="textVisible">
-            <bool>true</bool>
-           </property>
-           <property name="textDirection">
-            <enum>QProgressBar::TopToBottom</enum>
-           </property>
-           <property name="format">
-            <string>Not Working</string>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="0">
-          <widget class="QLabel" name="TCInACtionLabel">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="text">
-            <string>TC Active</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item row="13" column="0">
-          <widget class="QLabel" name="FuelHintLabel">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string>Fuel</string>
-           </property>
-          </widget>
-         </item>
-         <item row="12" column="0">
-          <widget class="QLabel" name="EngineMapHintLabel">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string>Engine Map</string>
-           </property>
-          </widget>
-         </item>
-         <item row="9" column="0">
-          <widget class="QLabel" name="ABSHintLabel">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string>ABS</string>
-           </property>
-          </widget>
-         </item>
-         <item row="10" column="0">
-          <widget class="QLabel" name="TCHintLabel">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string>TC</string>
-           </property>
-          </widget>
-         </item>
-         <item row="4" column="1">
-          <widget class="QProgressBar" name="ABSInActionProgressBar">
-           <property name="styleSheet">
-            <string notr="true">QProgressBar {
-     border: 2px solid grey;
-     border-radius: 5px;
-     background-color: rgb(120, 120, 120);
- }
-
-QProgressBar::chunk {
-     background-color: rgba(0, 254, 0, 180);
- }</string>
-           </property>
-           <property name="value">
-            <number>0</number>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-           <property name="format">
-            <string>Not Driving</string>
-           </property>
-          </widget>
-         </item>
-         <item row="12" column="1">
-          <widget class="QLabel" name="EngineMapLabel">
-           <property name="text">
-            <string>Not Driving</string>
-           </property>
-          </widget>
-         </item>
-         <item row="7" column="1">
-          <widget class="QLabel" name="GearLabel">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string>Not Driving</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item row="8" column="0">
-          <widget class="QLabel" name="SpeedHintLabel">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string>Speed</string>
-           </property>
-          </widget>
-         </item>
-         <item row="9" column="1">
-          <widget class="QLabel" name="ABSLabel">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string>Not Driving</string>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="0">
-          <widget class="QLabel" name="BrakeLabel">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="text">
-            <string>Brake</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item row="13" column="1">
-          <widget class="QLabel" name="FuelLabel">
-           <property name="text">
-            <string>Not Driving</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="1">
-          <widget class="QProgressBar" name="ThrottleProgressBar">
-           <property name="styleSheet">
-            <string notr="true">QProgressBar {
-     border: 2px solid grey;
-     border-radius: 5px;
-     background-color: rgb(120, 120, 120);
- }
-
-QProgressBar::chunk {
-     background-color: rgba(0, 254, 0, 180);
- }</string>
-           </property>
-           <property name="value">
-            <number>0</number>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-           <property name="format">
-            <string>Not Driving</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="0">
-          <widget class="QLabel" name="ThrottleLabel">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="text">
-            <string>Throttle</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-           </property>
-          </widget>
-         </item>
-        </layout>
+        </property>
+        <property name="minimum">
+         <number>-500</number>
+        </property>
+        <property name="maximum">
+         <number>500</number>
+        </property>
+        <property name="value">
+         <number>0</number>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+        <property name="textVisible">
+         <bool>true</bool>
+        </property>
+        <property name="textDirection">
+         <enum>QProgressBar::TopToBottom</enum>
+        </property>
+        <property name="format">
+         <string>Not Working</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="0">
+       <widget class="QLabel" name="GearHintLabel">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Gear</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="1">
+       <widget class="QLabel" name="GearLabel">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Not Driving</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="0">
+       <widget class="QLabel" name="SpeedHintLabel">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Speed</string>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="1">
+       <widget class="QLabel" name="SpeedLabel">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Not Driving</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="0">
+       <widget class="QLabel" name="ABSHintLabel">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>ABS</string>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="1">
+       <widget class="QLabel" name="ABSLabel">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Not Driving</string>
+        </property>
+       </widget>
+      </item>
+      <item row="8" column="0">
+       <widget class="QLabel" name="TCHintLabel">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>TC</string>
+        </property>
+       </widget>
+      </item>
+      <item row="8" column="1">
+       <widget class="QLabel" name="TCLabel">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Not Driving</string>
+        </property>
+       </widget>
+      </item>
+      <item row="9" column="0">
+       <widget class="QLabel" name="TC2HintLabel">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>TC 2</string>
+        </property>
+       </widget>
+      </item>
+      <item row="9" column="1">
+       <widget class="QLabel" name="TC2Label">
+        <property name="text">
+         <string>Not Driving</string>
+        </property>
+       </widget>
+      </item>
+      <item row="10" column="0">
+       <widget class="QLabel" name="EngineMapHintLabel">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Engine Map</string>
+        </property>
+       </widget>
+      </item>
+      <item row="10" column="1">
+       <widget class="QLabel" name="EngineMapLabel">
+        <property name="text">
+         <string>Not Driving</string>
+        </property>
+       </widget>
+      </item>
+      <item row="11" column="0">
+       <widget class="QLabel" name="FuelHintLabel">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Fuel</string>
+        </property>
+       </widget>
+      </item>
+      <item row="11" column="1">
+       <widget class="QLabel" name="FuelLabel">
+        <property name="text">
+         <string>Not Driving</string>
+        </property>
        </widget>
       </item>
      </layout>
@@ -514,6 +520,21 @@ QProgressBar::chunk {
       <enum>QFrame::Raised</enum>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout">
+      <property name="spacing">
+       <number>0</number>
+      </property>
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
       <item>
        <widget class="QwtPlot" name="ThrottlePlot">
         <property name="sizePolicy">

@@ -10,13 +10,18 @@
 
 // boost
 #include <boost/asio/io_context.hpp>
+#include <boost/asio/executor_work_guard.hpp>
 
 // rpc
 #include <rpc/stub.h>
+#include <rpc/method.h>
+#include "proto/service.pb.h"
 
-// module
+// logic
+#include "logic/logic.h"
+
+// ui
 #include "ui/connect.h"
-#include "ui/main_window.h"
 #include "ui/driver_input.h"
 #include "ui/telemetry.h"
 
@@ -33,23 +38,28 @@ public:
 
 private:
     void net_main();
+    void shared_memory_main();
 
 private slots:
-    void start_connection(QString address, QString driver, QString password, uint16_t port);
-    void finish_connection();
-
+    void quit();
+    void handle_connection_success(std::shared_ptr<rpc::tcp_stub> tcp_stub, std::shared_ptr<rpc::udp_stub> udp_stub);
+    
 private:
     net::io_context io_context_;
-
-    std::jthread net_thread_;
-    std::jthread shared_memory_thread_;
+    std::optional<net::executor_work_guard<net::io_context::executor_type>> guard_;
+    rpc::methods methods_;
 
     std::shared_ptr<rpc::tcp_stub> tcp_stub_;
     std::shared_ptr<rpc::udp_stub> udp_stub_;
 
+
+    logic::connection *connection_logic_;
+
+    std::jthread net_thread_;
+    std::jthread shared_memory_thread_;
+
     QApplication *application_;
     ui::connect *connect_;
-    ui::main_window *main_window_;
     ui::driver_input *driver_input_;
     ui::telemetry *telemetry_;
 };

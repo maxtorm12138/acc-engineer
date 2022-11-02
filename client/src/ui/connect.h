@@ -7,23 +7,28 @@ namespace Ui {
 class Connect;
 }
 
+namespace acc_engineer::logic {
+class connection;
+}
+
 namespace acc_engineer::ui {
 
 class connect : public QWidget
 {
     Q_OBJECT
 public:
-    explicit connect(QWidget *parent = nullptr);
-
+    explicit connect(logic::connection *logic, QWidget *parent = nullptr);
+    
 signals:
-    void connection(QString address, QString driver, QString password, uint16_t port);
 
 private slots:
     void on_ConnectButton_clicked();
     void on_ExitButton_clicked();
-
+    
+    void handle_connection_failure(uint64_t code, QString message);
 private:
     Ui::Connect *ui_;
+    logic::connection *logic_;
 };
 
 } // namespace acc_engineer::ui
