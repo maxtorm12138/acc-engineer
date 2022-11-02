@@ -43,7 +43,9 @@ private:
 
     net::awaitable<Echo::Response> echo(const rpc::context &context, const Echo::Request &request);
 
-    net::awaitable<Authentication::Response> authentication(const rpc::context &context, const Authentication::Request &request);
+    net::awaitable<AuthenticationTCP::Response> authentication_tcp(const rpc::context &context, const AuthenticationTCP::Request &request);
+
+    net::awaitable<AuthenticationUDP::Response> authentication_udp(const rpc::context &context, const AuthenticationUDP::Request &request);
 
 private:
     net::awaitable<void> tcp_run();
@@ -63,8 +65,7 @@ private:
     config config_;
     bool running_{false};
     rpc::methods methods_;
-    std::unique_ptr<rpc::batch_task<void>> runner_;
-
+    std::shared_ptr<rpc::batch_task<rpc::wait_only>> runner_;
     udp_session_manager udp_session_manager_;
     tcp_session_manager tcp_session_manager_;
 
@@ -86,32 +87,32 @@ template<typename Message>
 net::awaitable<void> service::post(const rpc::request_t<Message> &request)
 {
     auto executor = co_await net::this_coro::executor;
-    rpc::batch_task<rpc::response_t<Message>> poster;
+    auto runner = rpc::batch_task<rpc::response_t<Message>>::create();
 
     for (auto &session : tcp_session_manager_.authened())
     {
         if (auto stub = session.stub.lock(); stub != nullptr)
         {
-            co_await poster.add(stub->async_call<Message>(request));
+            co_await runner->add(stub->async_call<Message>(request));
         }
     }
 
-    auto [order, exceptions, results] = co_await poster.async_wait();
+    auto [order, exceptions, results] = co_await runner->async_wait(net::experimental::wait_for_all());
 }
 
 template<typename Message>
 net::awaitable<void> service::broadcast(const rpc::request_t<Message> &request)
 {
     auto executor = co_await net::this_coro::executor;
-    rpc::batch_task<rpc::response_t<Message>> poster;
+    auto runner = rpc::batch_task<rpc::response_t<Message>>::create();
     for (auto &session : udp_session_manager_.authened())
     {
         if (auto stub = session.stub.lock(); stub != nullptr)
         {
-            co_await poster.add(stub->async_call<Message>(request));
+            co_await runner->add(stub->async_call<Message>(request));
         }
     }
-    auto [order, exceptions, results] = co_await poster.async_wait();
+    auto [order, exceptions, results] = co_await runner->async_wait(net::experimental::wait_for_all());
 }
 
 } // namespace acc_engineer

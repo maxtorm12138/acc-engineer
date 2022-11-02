@@ -34,22 +34,27 @@ net::awaitable<void> connect(int argc, char *argv[])
     tcp_stub = rpc::tcp_stub::create(std::move(tcp_socket), methods);
 
     net::co_spawn(
-        executor, []() { return tcp_stub->run(); }, net::detached);
+        executor, []() { return tcp_stub->async_run(); }, net::detached);
 
-    Authentication::Request authen_request;
-    authen_request.set_driver_name(argv[3]);
-    authen_request.set_password(argv[4]);
+    AuthenticationTCP::Request tcp_authen_request;
+    tcp_authen_request.set_driver_name(argv[3]);
+    tcp_authen_request.set_password(argv[4]);
 
-    auto authen_response = co_await tcp_stub->async_call<Authentication>(authen_request);
-    authen_request.set_driver_id(authen_response.driver_id());
+    auto tcp_authen_response = co_await tcp_stub->async_call<AuthenticationTCP>(tcp_authen_request);
 
     net::ip::udp::socket udp_socket(executor);
     co_await udp_socket.async_connect(net::ip::udp::endpoint{connected->endpoint().address(), connected->endpoint().port()}, net::use_awaitable);
     udp_stub = rpc::udp_stub::create(std::move(udp_socket), methods);
-    net::co_spawn(
-        executor, []() { return udp_stub->run(); }, net::detached);
 
-    authen_response = co_await udp_stub->async_call<Authentication>(authen_request);
+    net::co_spawn(
+        executor, []() { return udp_stub->async_run(); }, net::detached);
+
+    AuthenticationUDP::Request udp_authen_request;
+    udp_authen_request.set_driver_name(argv[3]);
+    udp_authen_request.set_password(argv[4]);
+    udp_authen_request.set_driver_id(tcp_authen_response.driver_id());
+
+    auto udp_authen_response = co_await udp_stub->async_call<AuthenticationUDP>(udp_authen_request);
 }
 
 net::awaitable<void> keepalive()
@@ -60,7 +65,7 @@ net::awaitable<void> keepalive()
 
     while (true)
     {
-        timer.expires_after(3s);
+        timer.expires_after(10ms);
         co_await timer.async_wait(net::use_awaitable);
         co_await tcp_stub->async_call<Echo>(Echo::Request{});
         co_await udp_stub->async_call<Echo>(Echo::Request{});

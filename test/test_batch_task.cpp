@@ -64,7 +64,7 @@ net::awaitable<void> cancel_job()
     spdlog::info("cancel_job {} ended", N);
 }
 
-net::awaitable<void> cancel_job_canceller(rpc::batch_task<void> &task)
+net::awaitable<void> cancel_job_canceller(std::shared_ptr<rpc::batch_task<void>> task)
 {
     auto executor = co_await net::this_coro::executor;
     using namespace std::chrono_literals;
@@ -72,7 +72,7 @@ net::awaitable<void> cancel_job_canceller(rpc::batch_task<void> &task)
     timer.expires_after(5s);
     spdlog::info("cancel_job_canceller started pause 5s");
     co_await timer.async_wait(net::use_awaitable);
-    task.cancel();
+    task->cancel();
     spdlog::info("cancel_job_canceller ended");
 }
 
@@ -125,26 +125,26 @@ net::awaitable<move_only_object> move_only_job()
 net::awaitable<void> run_void_job()
 {
     auto executor = co_await net::this_coro::executor;
-    rpc::batch_task<void> batch_task;
-    co_await batch_task.add(void_job<0>());
-    co_await batch_task.add(void_job<1>());
-    co_await batch_task.add(void_job<2>());
-    co_await batch_task.add(void_job<3>());
+    auto batch_task = rpc::batch_task<void>::create();
+    co_await batch_task->add(void_job<0>());
+    co_await batch_task->add(void_job<1>());
+    co_await batch_task->add(void_job<2>());
+    co_await batch_task->add(void_job<3>());
 
-    auto [order, exceptions] = co_await batch_task.async_wait(net::experimental::wait_for_all());
+    auto [order, exceptions] = co_await batch_task->async_wait(net::experimental::wait_for_all());
     spdlog::info("void job end");
 }
 
 net::awaitable<void> run_one_void_job()
 {
     auto executor = co_await net::this_coro::executor;
-    rpc::batch_task<void> batch_task;
-    co_await batch_task.add(void_job<0>());
-    co_await batch_task.add(void_job<1>());
-    co_await batch_task.add(void_job<2>());
-    co_await batch_task.add(void_job<3>());
+    auto batch_task = rpc::batch_task<void>::create();
+    co_await batch_task->add(void_job<0>());
+    co_await batch_task->add(void_job<1>());
+    co_await batch_task->add(void_job<2>());
+    co_await batch_task->add(void_job<3>());
 
-    auto [order, exceptions] = co_await batch_task.async_wait(net::experimental::wait_for_one());
+    auto [order, exceptions] = co_await batch_task->async_wait(net::experimental::wait_for_one());
     for (int i = 0; i < order.size(); i++)
     {
         try
@@ -166,14 +166,14 @@ net::awaitable<void> run_one_void_job()
 net::awaitable<void> run_cancel_job()
 {
     auto executor = co_await net::this_coro::executor;
-    rpc::batch_task<void> batch_task;
-    co_await batch_task.add(cancel_job<0>());
-    co_await batch_task.add(cancel_job<1>());
-    co_await batch_task.add(cancel_job<2>());
-    co_await batch_task.add(cancel_job<3>());
+    auto batch_task = rpc::batch_task<void>::create();
+    co_await batch_task->add(cancel_job<0>());
+    co_await batch_task->add(cancel_job<1>());
+    co_await batch_task->add(cancel_job<2>());
+    co_await batch_task->add(cancel_job<3>());
 
     net::co_spawn(executor, cancel_job_canceller(batch_task), net::detached);
-    auto [order, exceptions] = co_await batch_task.async_wait(net::experimental::wait_for_all());
+    auto [order, exceptions] = co_await batch_task->async_wait(net::experimental::wait_for_all());
     for (int i = 0; i < order.size(); i++)
     {
         try
@@ -196,14 +196,14 @@ net::awaitable<void> run_cancel_job()
 net::awaitable<void> run_value_job()
 {
     auto executor = co_await net::this_coro::executor;
-    rpc::batch_task<int> batch_task;
+    auto batch_task = rpc::batch_task<int>::create();
 
-    co_await batch_task.add(value_job<0>());
-    co_await batch_task.add(value_job<1>());
-    co_await batch_task.add(value_job<2>());
-    co_await batch_task.add(value_job<3>());
+    co_await batch_task->add(value_job<0>());
+    co_await batch_task->add(value_job<1>());
+    co_await batch_task->add(value_job<2>());
+    co_await batch_task->add(value_job<3>());
 
-    auto [order, exceptions, values] = co_await batch_task.async_wait(net::experimental::wait_for_all());
+    auto [order, exceptions, values] = co_await batch_task->async_wait(net::experimental::wait_for_all());
 
     std::string value_str = "[";
     for (auto value : values)
@@ -219,14 +219,14 @@ net::awaitable<void> run_value_job()
 net::awaitable<void> run_move_only_job()
 {
     auto executor = co_await net::this_coro::executor;
-    rpc::batch_task<move_only_object> batch_task;
+    auto batch_task = rpc::batch_task<move_only_object>::create();
 
-    co_await batch_task.add(move_only_job<0>());
-    co_await batch_task.add(move_only_job<1>());
-    co_await batch_task.add(move_only_job<2>());
-    co_await batch_task.add(move_only_job<3>());
+    co_await batch_task->add(move_only_job<0>());
+    co_await batch_task->add(move_only_job<1>());
+    co_await batch_task->add(move_only_job<2>());
+    co_await batch_task->add(move_only_job<3>());
 
-    auto [order, exceptions, values] = co_await batch_task.async_wait(net::experimental::wait_for_all());
+    auto [order, exceptions, values] = co_await batch_task->async_wait(net::experimental::wait_for_all());
 
     std::string value_str = "[";
     for (const auto &value : values)

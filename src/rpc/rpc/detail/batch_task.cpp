@@ -2,11 +2,16 @@
 namespace acc_engineer::rpc::detail {
 void batch_task_base::cancel(net::cancellation_type type)
 {
-    for (auto &weak_signal : cancellation_signals_)
+    for (auto iter = cancellation_signals_.begin(); iter != cancellation_signals_.end();)
     {
-        if (auto signal = weak_signal.lock(); signal != nullptr)
+        if (auto signal = iter->lock(); signal != nullptr)
         {
             signal->emit(type);
+            ++iter;
+        }
+        else
+        {
+            iter = cancellation_signals_.erase(iter);
         }
     }
 }
