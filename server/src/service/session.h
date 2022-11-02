@@ -151,7 +151,7 @@ public:
     };
 
     template<typename ByTag, typename KeyType>
-    std::shared_ptr<typename Session::stub_type> stub(KeyType &key)
+    std::shared_ptr<typename Session::stub_type> stub(const KeyType &key)
     {
         auto &view_staged = staged_sessions_.template get<ByTag>();
         auto &view_authened = authened_sessions_.template get<ByTag>();
@@ -170,7 +170,7 @@ public:
     }
 
     template<>
-    std::shared_ptr<typename Session::stub_type> stub<by_driver_id>(uint64_t &key)
+    std::shared_ptr<typename Session::stub_type> stub<by_driver_id, uint64_t>(const uint64_t &key)
     {
         auto &view_authened = authened_sessions_.template get<by_driver_id>();
 
@@ -184,7 +184,7 @@ public:
     }
 
     template<>
-    std::shared_ptr<typename Session::stub_type> stub<by_driver_name>(std::string &key)
+    std::shared_ptr<typename Session::stub_type> stub<by_driver_name, std::string>(const std::string &key)
     {
         auto &view_authened = authened_sessions_.template get<by_driver_name>();
 

@@ -69,16 +69,6 @@ private:
     udp_session_manager udp_session_manager_;
     tcp_session_manager tcp_session_manager_;
 
-    // clang-format off
-    boost::multi_index_container<
-        driver,
-        mi::indexed_by<
-            mi::hashed_unique< mi::tag<by_driver_id>, mi::key<&driver::id>>,
-            mi::hashed_unique< mi::tag<by_driver_name>, mi::key<&driver::name>>
-        >
-    > drivers_;
-    // clang-format on
-
 private:
     static std::atomic<uint64_t> driver_id_max_;
 };

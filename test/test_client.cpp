@@ -41,6 +41,10 @@ net::awaitable<void> connect(int argc, char *argv[])
     tcp_authen_request.set_password(argv[4]);
 
     auto tcp_authen_response = co_await tcp_stub->async_call<AuthenticationTCP>(tcp_authen_request);
+    if (tcp_authen_response.error_code() != 0)
+    {
+        throw std::logic_error(fmt::format("{} {}", tcp_authen_response.error_code(), tcp_authen_response.error_message()));
+    }
 
     net::ip::udp::socket udp_socket(executor);
     co_await udp_socket.async_connect(net::ip::udp::endpoint{connected->endpoint().address(), connected->endpoint().port()}, net::use_awaitable);
@@ -55,6 +59,10 @@ net::awaitable<void> connect(int argc, char *argv[])
     udp_authen_request.set_driver_id(tcp_authen_response.driver_id());
 
     auto udp_authen_response = co_await udp_stub->async_call<AuthenticationUDP>(udp_authen_request);
+    if (udp_authen_response.error_code() != 0)
+    {
+        throw std::logic_error(fmt::format("{} {}", udp_authen_response.error_code(), udp_authen_response.error_message()));
+    }
 }
 
 net::awaitable<void> keepalive()
@@ -65,7 +73,7 @@ net::awaitable<void> keepalive()
 
     while (true)
     {
-        timer.expires_after(10ms);
+        timer.expires_after(20s);
         co_await timer.async_wait(net::use_awaitable);
         co_await tcp_stub->async_call<Echo>(Echo::Request{});
         co_await udp_stub->async_call<Echo>(Echo::Request{});
@@ -85,9 +93,17 @@ int main(int argc, char *argv[])
     spdlog::set_level(spdlog::level::trace);
     net::io_context io_context;
     net::co_spawn(io_context, co_main(argc, argv), [](std::exception_ptr exception_ptr) {
-        if (exception_ptr)
+        try
         {
-            std::rethrow_exception(exception_ptr);
+
+            if (exception_ptr)
+            {
+                std::rethrow_exception(exception_ptr);
+            }
+        }
+        catch (const std::exception &ex)
+        {
+            SPDLOG_ERROR("co_main exception: {}", ex.what());
         }
     });
 

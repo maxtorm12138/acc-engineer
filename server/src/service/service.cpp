@@ -176,7 +176,22 @@ net::awaitable<void> service::new_tcp_connection(net::ip::tcp::socket socket)
         co_await runner->add(tcp_timer());
         co_await runner->add(tcp_run());
 
-        co_await runner->async_wait(net::experimental::wait_for_one());
+        sys::error_code error_code;
+        co_await runner->async_wait(net::experimental::wait_for_one(), error_code);
+        if (error_code && error_code != rpc::system_error::operation_canceled)
+        {
+            throw sys::system_error(error_code);
+        }
+
+        DriverUpdate::Request driver_update_request;
+        for (auto &session : tcp_session_manager_.authened())
+        {
+            auto driver = driver_update_request.add_drivers();
+            driver->set_driver_id(session.driver_id);
+            driver->set_driver_name(session.driver_name);
+        }
+
+        co_await post<DriverUpdate>(driver_update_request);
     }
     catch (sys::system_error &ex)
     {
@@ -247,7 +262,7 @@ net::awaitable<void> service::new_udp_connection(net::ip::udp::socket &acceptor,
         };
 
         auto error_code = co_await channel_stub->packet_handler().deliver(std::move(initial));
-        if (error_code)
+        if (error_code && error_code != rpc::system_error::operation_canceled)
         {
             throw sys::system_error(error_code);
         }
@@ -257,7 +272,11 @@ net::awaitable<void> service::new_udp_connection(net::ip::udp::socket &acceptor,
         co_await runner->add(udp_timer());
         co_await runner->add(udp_send());
 
-        co_await runner->async_wait(net::experimental::wait_for_one());
+        co_await runner->async_wait(net::experimental::wait_for_one(), error_code);
+        if (error_code && error_code != rpc::system_error::operation_canceled)
+        {
+            throw sys::system_error(error_code);
+        }
     }
     catch (sys::system_error &ex)
     {
@@ -276,7 +295,7 @@ net::awaitable<sys::error_code> service::timer_reset(uint64_t command_id, const 
         auto timer = tcp_session_manager_.timer<by_stub_id>(context.stub_id);
         if (timer != nullptr)
         {
-            timer->expires_after(10s);
+            timer->expires_after(1min);
         }
     }
     else if (context.packet_handler_type == rpc::channel_packet_handler::type)
@@ -284,7 +303,7 @@ net::awaitable<sys::error_code> service::timer_reset(uint64_t command_id, const 
         auto timer = udp_session_manager_.timer<by_stub_id>(context.stub_id);
         if (timer != nullptr)
         {
-            timer->expires_after(10s);
+            timer->expires_after(30s);
         }
     }
 
@@ -308,23 +327,26 @@ net::awaitable<AuthenticationTCP::Response> service::authentication_tcp(const rp
         co_return response;
     }
 
-    uint64_t driver_id = 0;
-    if (context.packet_handler_type == rpc::tcp_packet_handler::type)
+    if (tcp_session_manager_.stub<by_driver_name>(request.driver_name()) != nullptr)
     {
-        driver_id = driver_id_max_++;
-        tcp_session_manager_.promote(context.stub_id, driver_id, request.driver_name());
-        drivers_.emplace(driver{.id = driver_id, .name = request.driver_name()});
-
-        DriverUpdate::Request driver_update_request;
-        for (auto driver : drivers_)
-        {
-            auto dri = driver_update_request.add_drivers();
-            dri->set_driver_id(driver.id);
-            dri->set_driver_name(driver.name);
-        }
-
-        co_await post<DriverUpdate>(driver_update_request);
+        AuthenticationTCP::Response response;
+        response.set_error_code(2);
+        response.set_error_message("driver already authenticated");
+        co_return response;
     }
+
+    uint64_t driver_id = driver_id_max_++;
+    tcp_session_manager_.promote(context.stub_id, driver_id, request.driver_name());
+
+    DriverUpdate::Request driver_update_request;
+    for (auto &session : tcp_session_manager_.authened())
+    {
+        auto driver = driver_update_request.add_drivers();
+        driver->set_driver_id(session.driver_id);
+        driver->set_driver_name(session.driver_name);
+    }
+
+    co_await post<DriverUpdate>(driver_update_request);
 
     AuthenticationTCP::Response response;
     response.set_error_code(0);
@@ -337,6 +359,14 @@ net::awaitable<AuthenticationUDP::Response> service::authentication_udp(const rp
 {
 
     if (request.password() != config_.password() || request.driver_name().empty() || request.driver_id() == 0)
+    {
+        AuthenticationUDP::Response response;
+        response.set_error_code(1);
+        response.set_error_message("authentication failure");
+        co_return response;
+    }
+
+    if (tcp_session_manager_.stub<by_driver_name>(request.driver_name()) == nullptr)
     {
         AuthenticationUDP::Response response;
         response.set_error_code(1);
