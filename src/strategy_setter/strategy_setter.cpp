@@ -1,3 +1,5 @@
 #include "strategy_setter.h"
 
-namespace acc_engineer::strategy_setter {}
+#include <cmath>
+
+namespace acc_engineer::strategy_setter {} // namespace acc_engineer::strategy_setter
