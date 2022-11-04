@@ -94,10 +94,17 @@ if (WIN32)
     target_compile_definitions(acc-engineer-shared-memory PRIVATE SPDLOG_ACTIVE_LEVEL=${ACC_ENGINEER_LOG_LEVEL})
 
     set(ACC_ENGINEER_STRATEGY_SETTER_SRCS
-        src/strategy_setter/strategy_setter.cpp
-        src/strategy_setter/strategy_setter.h)
+        ${ACC_ENGINEER_STRUCT_PROTO_FILES}
+        src/strategy_setter/strategy_setter/strategy_setter.cpp
+        src/strategy_setter/strategy_setter/strategy_setter.h)
 
     add_library(acc-engineer-strategy-setter ${ACC_ENGINEER_STRATEGY_SETTER_SRCS})
+    target_link_libraries(acc-engineer-strategy-setter PRIVATE Boost::boost)
+    target_link_libraries(acc-engineer-strategy-setter PRIVATE spdlog::spdlog)
+    target_link_libraries(acc-engineer-strategy-setter PRIVATE protobuf::libprotobuf)
+    target_link_libraries(acc-engineer-strategy-setter PRIVATE acc-engineer-shared-memory)
+    target_include_directories(acc-engineer-strategy-setter PUBLIC src/strategy_setter)
+    target_compile_definitions(acc-engineer-strategy-setter PRIVATE SPDLOG_ACTIVE_LEVEL=${ACC_ENGINEER_LOG_LEVEL})
 endif()
 
 if (WIN32 AND ACC_ENGINEER_BUILD_CLIENT)
@@ -122,7 +129,7 @@ if (WIN32 AND ACC_ENGINEER_BUILD_CLIENT)
 
     add_executable(acc-engineer client/src/main.cpp ${ACC_ENGINEER_CLIENT_SRCS})
     target_link_directories(acc-engineer PRIVATE ${QWT_LIBRARY_DIR})
-    target_link_libraries(acc-engineer PRIVATE acc-engineer-shared-memory acc-engineer-rpc)
+    target_link_libraries(acc-engineer PRIVATE acc-engineer-shared-memory acc-engineer-rpc acc-engineer-strategy-setter)
     target_link_libraries(acc-engineer PRIVATE Boost::boost)
     target_link_libraries(acc-engineer PRIVATE protobuf::libprotobuf)
     target_link_libraries(acc-engineer PRIVATE spdlog::spdlog)
@@ -173,9 +180,15 @@ function(ADD_ACC_ENGINEER_TEST)
     if (MSVC)
         target_compile_definitions(${ACC_ENGINEER_TEST_NAME} PRIVATE _WIN32_WINNT=0x0A00)
     endif ()
+
+    if (WIN32)
+        target_link_libraries(${ACC_ENGINEER_TEST_NAME} PRIVATE acc-engineer-shared-memory)
+        target_link_libraries(${ACC_ENGINEER_TEST_NAME} PRIVATE acc-engineer-strategy-setter)
+    endif()
 endfunction()
 
 if (ACC_ENGINEER_BUILD_TESTS)
     ADD_ACC_ENGINEER_TEST(NAME test_batch_task FILES test/test_batch_task.cpp)
     ADD_ACC_ENGINEER_TEST(NAME test_client FILES test/test_client.cpp ${ACC_ENGINEER_SERVICE_PROTO_FILES})
+    ADD_ACC_ENGINEER_TEST(NAME test_direct_input FILES test/test_direct_input.cpp)
 endif()
