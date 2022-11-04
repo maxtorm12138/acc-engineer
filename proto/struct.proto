@@ -21,6 +21,15 @@ message WheelInfo
   float rear_right = 4;
 }
 
+message CarDamage
+{
+  float front = 1;
+  float rear = 2;
+  float left = 3;
+  float right = 4;
+  float center = 5;
+}
+
 message Strategy
 {
   float fuel = 1;
@@ -55,7 +64,12 @@ message CarInfo
   WheelInfo brake_temp = 11;
   WheelInfo pad_life = 12;
   WheelInfo disc_life = 13;
-  string kunos_id = 12;
+  WheelInfo tyre_core_temp = 14;
+  int front_brake_compound = 15;
+  int rear_brake_compound = 16;
+  CarDamage car_damanage = 17;
+  float brake_bias = 18;
+  string kunos_id = 100;
 }
 
 message SessionInfo
@@ -67,4 +81,6 @@ message SessionInfo
   int32 rain_intensity = 5;
   int32 rain_intensity_in10_min = 6;
   int32 rain_intensity_in30_min = 7;
+  float wind_speed = 8;
+  float wind_direction = 9;
 }
