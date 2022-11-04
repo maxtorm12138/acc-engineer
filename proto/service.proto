@@ -73,9 +73,58 @@ message DriverUpdate
   message Request
   {
     repeated Driver drivers = 1;
+    uint64 version = 2;
   }
 
   message Response
   {
+  }
+}
+
+message DriverTelemetryUpdate
+{
+  option(rpc.cmd_id) = 4;
+  option(rpc.no_reply) = true;
+
+  message Request
+  {
+    Driver driver = 1;
+  }
+
+  message Response
+  {
+
+  }
+}
+
+message DriverStrategyUpdate
+{
+  option(rpc.cmd_id) = 5;
+  option(rpc.no_reply) = true;
+
+  message Request
+  {
+    Driver driver = 1;
+  }
+
+  message Response
+  {
+
+  }
+}
+
+message DriverStrategyUpdateDone
+{
+  option(rpc.cmd_id) = 6;
+  option(rpc.no_reply) = true;
+  
+  message Request
+  {
+    Driver driver = 1;
+  }
+
+  message Response
+  {
+
   }
 }

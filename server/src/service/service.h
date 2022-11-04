@@ -54,7 +54,7 @@ private:
 
     net::awaitable<void> new_tcp_connection(net::ip::tcp::socket socket);
 
-    net::awaitable<void> new_udp_connection(net::ip::udp::socket &acceptor, net::ip::udp::endpoint remote, std::vector<uint8_t> initial);
+    net::awaitable<void> new_udp_connection(std::shared_ptr<net::ip::udp::socket> acceptor, net::ip::udp::endpoint remote, std::vector<uint8_t> initial);
 
     template<typename Message>
     net::awaitable<void> post(
@@ -71,7 +71,7 @@ private:
     tcp_session_manager tcp_session_manager_;
 
 private:
-    static std::atomic<uint64_t> driver_id_max_;
+    static std::atomic<uint64_t> driver_status_version_;
 };
 
 template<typename Message>
