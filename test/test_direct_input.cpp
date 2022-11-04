@@ -5,15 +5,20 @@ using namespace acc_engineer;
 
 BOOL CALLBACK enum_notepad_windows(HWND hwnd, LPARAM param)
 {
-    WCHAR window_name[512];
-    auto length = GetWindowTextW(hwnd, window_name, 511);
+    std::string window_text;
+    window_text.resize(GetWindowTextLength(hwnd));
+    GetWindowText(hwnd, window_text.data(), window_text.size() + 1);
 
-    if (std::wstring(window_name, length).find(L"PowerShell") != std::string::npos)
+    if (window_text.find("PowerShell") != std::string::npos)
     {
         auto win = reinterpret_cast<HWND *>(param);
         *win = hwnd;
     }
-    std::wcout << L"Window" << std::wstring(window_name, length) << std::endl;
+
+    if (!window_text.empty())
+    {
+        SPDLOG_INFO("window: {}", window_text);
+    }
     return true;
 }
 
