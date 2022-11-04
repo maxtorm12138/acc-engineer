@@ -9,8 +9,8 @@ message Driver
 
 enum TyreCompound
 {
-  DRY = 1,
-  WET = 2,
+  DRY = 0;
+  WET = 1;
 }
 
 message WheelInfo
@@ -52,21 +52,21 @@ message DriverInput
 message CarInfo
 {
   float fuel_remain = 1;
-  int gear = 2;
+  int32 gear = 2;
   float speed_kmh = 3;
-  int abs = 4;
-  int tc = 5;
-  int tc2 = 6;
-  int engine_map = 7;
+  int32 abs = 4;
+  int32 tc = 5;
+  int32 tc2 = 6;
+  int32 engine_map = 7;
   float abs_in_action = 8;
   float tc_in_action = 9;
-  int rpms = 10;
+  int32 rpms = 10;
   WheelInfo brake_temp = 11;
   WheelInfo pad_life = 12;
   WheelInfo disc_life = 13;
   WheelInfo tyre_core_temp = 14;
-  int front_brake_compound = 15;
-  int rear_brake_compound = 16;
+  int32 front_brake_compound = 15;
+  int32 rear_brake_compound = 16;
   CarDamage car_damanage = 17;
   float brake_bias = 18;
   string kunos_id = 100;
