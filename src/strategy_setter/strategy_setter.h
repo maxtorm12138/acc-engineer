@@ -1,0 +1,6 @@
+#ifndef ACC_ENGINEER_STRATEGY_SETTER_STRATEGY_SETTER_H
+#define ACC_ENGINEER_STRATEGY_SETTER_STRATEGY_SETTER_H
+
+namespace acc_engineer::strategy_setter {}
+
+#endif

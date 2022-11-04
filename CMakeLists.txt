@@ -92,6 +92,12 @@ if (WIN32)
     target_link_libraries(acc-engineer-shared-memory PRIVATE Qt6::Core)
     target_include_directories(acc-engineer-shared-memory PUBLIC src/shared_memory)
     target_compile_definitions(acc-engineer-shared-memory PRIVATE SPDLOG_ACTIVE_LEVEL=${ACC_ENGINEER_LOG_LEVEL})
+
+    set(ACC_ENGINEER_STRATEGY_SETTER_SRCS
+        src/strategy_setter/strategy_setter.cpp
+        src/strategy_setter/strategy_setter.h)
+
+    add_library(acc-engineer-strategy-setter ${ACC_ENGINEER_STRATEGY_SETTER_SRCS})
 endif()
 
 if (WIN32 AND ACC_ENGINEER_BUILD_CLIENT)
