@@ -47,6 +47,8 @@ private:
 
     net::awaitable<AuthenticationUDP::Response> authentication_udp(const rpc::context &context, const AuthenticationUDP::Request &request);
 
+    net::awaitable<DriverStrategyUpdate::Response> driver_strategy_update(const rpc::context &context, const DriverStrategyUpdate::Request &request);
+
 private:
     net::awaitable<void> tcp_run();
 

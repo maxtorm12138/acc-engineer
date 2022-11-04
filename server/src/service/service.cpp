@@ -393,5 +393,13 @@ net::awaitable<AuthenticationUDP::Response> service::authentication_udp(const rp
     co_return response;
 }
 
+net::awaitable<DriverStrategyUpdate::Response> service::driver_strategy_update(const rpc::context &context, const DriverStrategyUpdate::Request &request)
+{
+    auto stub = tcp_session_manager_.stub<by_driver_id>(request.driver().driver_id());
+    if (stub == nullptr) {}
+
+    co_return co_await stub->async_call<DriverStrategyUpdate>(request);
+}
+
 std::atomic<uint64_t> service::driver_status_version_;
 } // namespace acc_engineer

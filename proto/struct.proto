@@ -1,5 +1,5 @@
 syntax = "proto3";
-package acc_engineer.struct;
+package acc_engineer.structure;
 
 message Driver
 {

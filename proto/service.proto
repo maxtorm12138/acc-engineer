@@ -67,7 +67,7 @@ message DriverUpdate
 
   message Request
   {
-    repeated struct.Driver drivers = 1;
+    repeated structure.Driver drivers = 1;
     uint64 version = 2;
   }
 
@@ -83,7 +83,7 @@ message DriverTelemetryUpdate
 
   message Request
   {
-    struct.Driver driver = 1;
+    structure.Driver driver = 1;
   }
 
   message Response
@@ -98,12 +98,13 @@ message DriverStrategyUpdate
 
   message Request
   {
-    struct.Driver driver = 1;
-    struct.Strategy strategy = 2;
+    structure.Driver driver = 1;
+    structure.Strategy strategy = 2;
   }
 
   message Response
   {
-
+    int64 error_code = 100;
+    string error_message = 101;
   }
 }
