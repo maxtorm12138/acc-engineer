@@ -1,6 +1,7 @@
 syntax = "proto3";
 package acc_engineer;
 import "rpc.proto";
+import "struct.proto";
 
 message Echo
 {
@@ -59,23 +60,6 @@ message AuthenticationUDP
   }
 }
 
-message Driver
-{
-  string driver_name = 1;
-  uint64 driver_id = 2;
-}
-
-message Strategy
-{
-  float fuel = 1;
-  int32 tyre_set = 2;
-  string tyre_compound = 3;
-  repeated float tyre_pressures = 4;
-  int32 brake_pad = 5;
-  bool repair_bodywork = 6;
-  bool repair_suspension = 7;
-}
-
 message DriverUpdate
 {
   option(rpc.cmd_id) = 3;
@@ -83,7 +67,7 @@ message DriverUpdate
 
   message Request
   {
-    repeated Driver drivers = 1;
+    repeated struct.Driver drivers = 1;
     uint64 version = 2;
   }
 
@@ -99,7 +83,7 @@ message DriverTelemetryUpdate
 
   message Request
   {
-    Driver driver = 1;
+    struct.Driver driver = 1;
   }
 
   message Response
@@ -114,8 +98,8 @@ message DriverStrategyUpdate
 
   message Request
   {
-    Driver driver = 1;
-    Strategy strategy = 2;
+    struct.Driver driver = 1;
+    struct.Strategy strategy = 2;
   }
 
   message Response

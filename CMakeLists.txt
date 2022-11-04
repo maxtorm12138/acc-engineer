@@ -44,6 +44,7 @@ endfunction()
 
 generate_proto(proto/ proto/rpc.proto ${CMAKE_CURRENT_BINARY_DIR}/proto ACC_ENGINEER_RPC_PROTO_FILES)
 generate_proto(proto/ proto/service.proto ${CMAKE_CURRENT_BINARY_DIR}/proto ACC_ENGINEER_SERVICE_PROTO_FILES)
+generate_proto(proto/ proto/struct.proto ${CMAKE_CURRENT_BINARY_DIR}/proto ACC_ENGINEER_STRUCT_PROTO_FILES)
 
 set(ACC_ENGINEER_LOG_LEVEL CACHE STRING 3)
 
@@ -96,6 +97,7 @@ endif()
 if (WIN32 AND ACC_ENGINEER_BUILD_CLIENT)
     set(ACC_ENGINEER_CLIENT_SRCS
         ${ACC_ENGINEER_SERVICE_PROTO_FILES}
+        ${ACC_ENGINEER_STRUCT_PROTO_FILES}
         client/src/ui/connect.cpp
         client/src/ui/connect.h
         client/src/ui/driver_input.cpp
@@ -135,6 +137,7 @@ endif()
 if (ACC_ENGINEER_BUILD_SERVER)
     set(ACC_ENGINEER_SERVER_SRCS
             ${ACC_ENGINEER_SERVICE_PROTO_FILES}
+            ${ACC_ENGINEER_STRUCT_PROTO_FILES}
             server/src/service/config.cpp
             server/src/service/config.h
             server/src/service/service.cpp

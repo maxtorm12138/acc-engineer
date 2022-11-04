@@ -22,13 +22,13 @@ struct by_name
 {};
 
 // GT3 2018
-constexpr car_spec amr_v12_vantage_gt3{.kunos_id = "amr_v12_vantage_gt3", .name = "Aston Martin Vantage V12 GT3 2013", .brake_bias_offset = -7};
-constexpr car_spec audi_r8_lms{.kunos_id = "audi_r8_lms", .name = "Audi R8 LMS 2015", .brake_bias_offset = -14};
-constexpr car_spec bentley_continental_gt3_2016{.kunos_id = "bentley_continental_gt3_2016", .name = "Bentley Continental GT3 2015"};
-constexpr car_spec bentley_continental_gt3_2018{.kunos_id = "bentley_continental_gt3_2018", .name = "Bentley Continental GT3 2018"};
-constexpr car_spec bmw_m6_gt3{.kunos_id = "bmw_m6_gt3", .name = "BMW M6 GT3 2017"};
-constexpr car_spec jaguar_g3{.kunos_id = "jaguar_g3", .name = "Emil Frey Jaguar G3 2012"};
-constexpr car_spec ferrari_488_gt3{.kunos_id = "ferrari_488_gt3", .name = "Ferrari 488 GT3 2018"};
+constexpr car_spec amr_v12_vantage_gt3{};
+constexpr car_spec audi_r8_lms{};
+constexpr car_spec bentley_continental_gt3_2016{};
+constexpr car_spec bentley_continental_gt3_2018{};
+constexpr car_spec bmw_m6_gt3{};
+constexpr car_spec jaguar_g3{};
+constexpr car_spec ferrari_488_gt3{};
 constexpr car_spec honda_nsx_gt3{};
 constexpr car_spec lamborghini_gallardo_rex{};
 constexpr car_spec lamborghini_huracan_gt3{};
@@ -69,7 +69,7 @@ constexpr car_spec mercedes_amg_gt3_evo{};
 // GT3 2021
 constexpr car_spec bmw_m4_gt3{};
 
-// Challengers Pack ¨C 2022
+// Challengers Pack DLC 2022
 constexpr car_spec audi_r8_lms_evo_ii{};
 constexpr car_spec bmw_m2_cs_racing{};
 constexpr car_spec ferrari_488_challenge_evo{};
@@ -120,6 +120,10 @@ const car_spec &find_spec(Key &find_key)
         container.emplace(mercedes_amg_gt3_evo);
         container.emplace(bmw_m4_gt3);
         container.emplace(audi_r8_lms_evo_ii);
+        container.emplace(bmw_m2_cs_racing);
+        container.emplace(ferrari_488_challenge_evo);
+        container.emplace(lamborghini_huracan_st_evo2);
+        container.emplace(porsche_992_gt3_cup);
         return container;
     }();
 

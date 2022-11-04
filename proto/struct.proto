@@ -1,0 +1,70 @@
+syntax = "proto3";
+package acc_engineer.struct;
+
+message Driver
+{
+  string driver_name = 1;
+  uint64 driver_id = 2;
+}
+
+enum TyreCompound
+{
+  DRY = 1,
+  WET = 2,
+}
+
+message WheelInfo
+{
+  float front_left = 1;
+  float front_right = 2;
+  float rear_left = 3;
+  float rear_right = 4;
+}
+
+message Strategy
+{
+  float fuel = 1;
+  int32 tyre_set = 2;
+  TyreCompound tyre_compound = 3;
+  WheelInfo tyre_pressures = 4;
+  int32 brake_pad = 8;
+  bool repair_bodywork = 9;
+  bool repair_suspension = 10;
+}
+
+message DriverInput
+{
+  float throttle = 1;
+  float brake = 2;
+  float steer_angle = 3;
+  float clutch = 4;
+}
+
+message CarInfo
+{
+  float fuel_remain = 1;
+  int gear = 2;
+  float speed_kmh = 3;
+  int abs = 4;
+  int tc = 5;
+  int tc2 = 6;
+  int engine_map = 7;
+  float abs_in_action = 8;
+  float tc_in_action = 9;
+  int rpms = 10;
+  WheelInfo brake_temp = 11;
+  WheelInfo pad_life = 12;
+  WheelInfo disc_life = 13;
+  string kunos_id = 12;
+}
+
+message SessionInfo
+{
+  int32 session_type = 1;
+  float air_temp = 2;
+  float road_temp = 3;
+  int32 grip_status = 4;
+  int32 rain_intensity = 5;
+  int32 rain_intensity_in10_min = 6;
+  int32 rain_intensity_in30_min = 7;
+}
