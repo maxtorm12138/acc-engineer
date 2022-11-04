@@ -65,6 +65,17 @@ message Driver
   uint64 driver_id = 2;
 }
 
+message Strategy
+{
+  float fuel = 1;
+  int32 tyre_set = 2;
+  string tyre_compound = 3;
+  repeated float tyre_pressures = 4;
+  int32 brake_pad = 5;
+  bool repair_bodywork = 6;
+  bool repair_suspension = 7;
+}
+
 message DriverUpdate
 {
   option(rpc.cmd_id) = 3;
@@ -100,27 +111,11 @@ message DriverTelemetryUpdate
 message DriverStrategyUpdate
 {
   option(rpc.cmd_id) = 5;
-  option(rpc.no_reply) = true;
 
   message Request
   {
     Driver driver = 1;
-  }
-
-  message Response
-  {
-
-  }
-}
-
-message DriverStrategyUpdateDone
-{
-  option(rpc.cmd_id) = 6;
-  option(rpc.no_reply) = true;
-  
-  message Request
-  {
-    Driver driver = 1;
+    Strategy strategy = 2;
   }
 
   message Response
