@@ -3,10 +3,12 @@
 
 #include <boost/noncopyable.hpp>
 #include <boost/interprocess/windows_shared_memory.hpp>
-#include <boost/interprocess/managed_windows_shared_memory.hpp>
 #include <boost/interprocess/mapped_region.hpp>
 
 #include "defines.h"
+
+#include "proto/struct.pb.h"
+
 namespace acc_engineer::shared_memory {
 class reader : public boost::noncopyable
 {
@@ -14,6 +16,10 @@ public:
     reader();
 
     [[nodiscard]] frame snapshot();
+
+    [[nodiscard]] float mfd_fuel_to_add() const;
+
+    [[nodiscard]] structure::WheelInfo mfd_tyre_pressure() const;
 
 private:
     boost::interprocess::windows_shared_memory physics_memory_;

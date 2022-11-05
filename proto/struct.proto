@@ -15,10 +15,10 @@ enum TyreCompound
 
 message WheelInfo
 {
-  float front_left = 1;
-  float front_right = 2;
-  float rear_left = 3;
-  float rear_right = 4;
+  float left_front = 1;
+  float right_front = 2;
+  float left_rear = 3;
+  float right_rear = 4;
 }
 
 message CarDamage

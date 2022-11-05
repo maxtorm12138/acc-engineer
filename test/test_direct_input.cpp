@@ -1,40 +1,37 @@
+#include <boost/asio/io_context.hpp>
 #include <spdlog/spdlog.h>
 #include <strategy_setter/strategy_setter.h>
-
+#include "proto/struct.pb.h"
+#include <boost/asio.hpp>
 using namespace acc_engineer;
+namespace net = boost::asio;
+namespace sys = boost::system;
 
-BOOL CALLBACK enum_notepad_windows(HWND hwnd, LPARAM param)
+net::awaitable<void> co_main()
 {
-    std::string window_text;
-    window_text.resize(GetWindowTextLength(hwnd));
-    GetWindowText(hwnd, window_text.data(), window_text.size() + 1);
+    using namespace std::chrono_literals;
+    auto executor = co_await net::this_coro::executor;
 
-    if (window_text.find("PowerShell") != std::string::npos)
-    {
-        auto win = reinterpret_cast<HWND *>(param);
-        *win = hwnd;
-    }
+    strategy_setter::strategy_setter setter(executor);
 
-    if (!window_text.empty())
-    {
-        SPDLOG_INFO("window: {}", window_text);
-    }
-    return true;
+    structure::Strategy strategy;
+    strategy.set_fuel(20.);
+    co_await setter.set(1, strategy);
+
+    net::steady_timer timer(executor);
+
+    timer.expires_after(10s);
+
+    co_await timer.async_wait(net::use_awaitable);
 }
 
 int main(int argc, char *argv[])
 {
     spdlog::set_level(spdlog::level::trace);
-    HWND handle;
-    if (EnumWindows(&enum_notepad_windows, reinterpret_cast<LPARAM>(&handle)))
-    {
-        if (SetForegroundWindow(handle))
-        {
-            strategy_setter::direct_input direct_input;
-            direct_input.press("p", 10);
-            return 0;
-        }
-    }
 
-    return -1;
+    net::io_context context;
+
+    net::co_spawn(context, co_main(), net::detached);
+
+    context.run();
 }

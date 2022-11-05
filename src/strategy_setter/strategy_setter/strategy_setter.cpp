@@ -19,6 +19,8 @@ const std::unordered_map<std::string_view, WORD> direct_input::keyboard_code{
     {"right", MapVirtualKey(0x27, MAPVK_VK_TO_VSC)},
 };
 
+const std::unordered_set<std::string_view> direct_input::arrow_key = {"up", "left", "down", "right"};
+
 bool direct_input::press(std::string_view key, uint64_t presses, std::chrono::steady_clock::duration interval)
 {
     uint64_t completed_presses = 0;
@@ -40,8 +42,6 @@ bool direct_input::press(std::string_view key, uint64_t presses, std::chrono::st
 
 bool direct_input::key_down(std::string_view key)
 {
-    const static std::unordered_set<std::string_view> ARROW_KEYS = {"up", "left", "down", "right"};
-
     if (!keyboard_code.contains(key))
     {
         return false;
@@ -52,7 +52,7 @@ bool direct_input::key_down(std::string_view key)
 
     DWORD keyboard_flags = KEYEVENTF_SCANCODE;
 
-    if (ARROW_KEYS.contains(key))
+    if (arrow_key.contains(key))
     {
         keyboard_flags |= KEYEVENTF_EXTENDEDKEY;
         // if numlock is on and an arrow key is being pressed, we need to send an additional scancode
@@ -68,7 +68,7 @@ bool direct_input::key_down(std::string_view key)
     const INPUT input{.type = INPUT_KEYBOARD, .ki = {.wScan = keyboard_code.at(key), .dwFlags = keyboard_flags}};
     input_events.push_back(input);
 
-    const UINT inserted = SendInput(input_events.size(), input_events.data(), sizeof(INPUT));
+    const UINT inserted = SendInput(static_cast<UINT>(input_events.size()), input_events.data(), sizeof(INPUT));
     return inserted == input_events.size();
 }
 bool direct_input::key_up(std::string_view key)
@@ -85,7 +85,7 @@ bool direct_input::key_up(std::string_view key)
 
     DWORD keyboard_flags = KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP;
 
-    if (ARROW_KEYS.contains(key))
+    if (arrow_key.contains(key))
     {
         keyboard_flags |= KEYEVENTF_EXTENDEDKEY;
     }
@@ -96,18 +96,18 @@ bool direct_input::key_up(std::string_view key)
     // if numlock is on and an arrow key is being pressed, we need to send an additional scancode
     // https://stackoverflow.com/questions/14026496/sendinput-sends-num8-when-i-want-to-send-vk-up-how-come
     // https://handmade.network/wiki/2823-keyboard_inputs_-_scancodes,_raw_input,_text_input,_key_names
-    if (ARROW_KEYS.contains(key) && GetKeyState(0x90))
+    if (arrow_key.contains(key) && GetKeyState(0x90))
     {
         const INPUT extra_input{.type = INPUT_KEYBOARD, .ki = {.wScan = 0xE0, .dwFlags = KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP}};
         input_events.push_back(extra_input);
     }
 
-    const UINT inserted = SendInput(input_events.size(), input_events.data(), sizeof(INPUT));
+    const UINT inserted = SendInput(static_cast<UINT>(input_events.size()), input_events.data(), sizeof(INPUT));
     return inserted == input_events.size();
 }
 
 strategy_setter::strategy_setter(net::any_io_executor &executor)
-    : strategy_channel_(executor, 1)
+    : strategy_channel_(executor)
 {
     strategy_thread_ = std::jthread([this]() { do_set(); });
 }
@@ -128,6 +128,7 @@ void strategy_setter::do_set()
 
     try
     {
+        using namespace std::chrono_literals;
         while (true)
         {
             auto [strategy, version] = strategy_channel_.async_receive(net::use_future).get();
@@ -136,12 +137,144 @@ void strategy_setter::do_set()
                 continue;
             }
 
+            // step 1 set acc to foreground
+            if (!do_acc_foreground())
+            {
+                continue;
+            }
+
+            // step 2 show MFD
+            SPDLOG_DEBUG("Press P to show MFD");
+            direct_input_.press("p", 1, 10ms);
+            SPDLOG_DEBUG("Press P to show MFD -- DONE");
+
+            // step 3 add fuel
+            // step 3a Go down 2 times to the fuel line
+            SPDLOG_DEBUG("Press down 2 times to fuel line");
+            direct_input_.press("down", 2, 10ms);
+            SPDLOG_DEBUG("Press down 2 times to fuel line -- DONE");
+
+            // step 3b press to add fuel
+            auto mfd_fuel = static_cast<int>(reader_.mfd_fuel_to_add());
+            auto target_fuel = static_cast<int>(strategy.fuel());
+            SPDLOG_DEBUG("Add fuel mfd_fuel: {} target_fuel: {}", mfd_fuel, target_fuel);
+            direct_input_.press_calculate({"left", "right"}, mfd_fuel, target_fuel, 10ms);
+            SPDLOG_DEBUG("Add fuel mfd_fuel: {} target_fuel: {} -- DONE", mfd_fuel, target_fuel);
+
+            // step 4  check if tyre set is on wet, tyre set will be disable
+            //         so going down 5 times will be FR instead of FL
+
+            // step 4a press down 5 times
+            SPDLOG_DEBUG("Press down 5 times to FR OR FL line");
+            direct_input_.press("down", 5, 10ms);
+            SPDLOG_DEBUG("Press down 5 times to FR OR FL line -- DONE");
+
+            // step 4b press left 1 time to change tyre pressure
+            auto old_rf = reader_.mfd_tyre_pressure().right_front();
+            SPDLOG_DEBUG("Press left 1 times");
+            direct_input_.press("left", 1, 10ms);
+            SPDLOG_DEBUG("Press left 1 times -- DONE");
+            auto new_rf = reader_.mfd_tyre_pressure().right_front();
+
+            bool is_mfd_wet_tyre = !is_floating_point_close(old_rf, new_rf);
+
+            // step 4c press right 1 time to restore tyre pressure
+            SPDLOG_DEBUG("is_mfd_wet_tyre: {} old_rf: {} new_rf: {}", is_mfd_wet_tyre, old_rf, new_rf);
+            SPDLOG_DEBUG("Press right 1 times");
+            direct_input_.press("right", 1, 10ms);
+            SPDLOG_DEBUG("Press right 1 times -- DONE");
+
+            // step 4d back to fuel line
+            SPDLOG_DEBUG("Press up 5 times to fuel line");
+            direct_input_.press("up", 5, 10ms);
+            SPDLOG_DEBUG("Press up 5 times to fuel line -- DONE");
+
             strategy_version_ = version;
+
+            int next_down_times = is_mfd_wet_tyre ? 2 : 3;
+
+            SPDLOG_DEBUG("Press down {} times to compound line", next_down_times);
+            direct_input_.press("down", next_down_times, 10ms);
+            SPDLOG_DEBUG("Press down {} times to compound line -- done", next_down_times);
+
+            switch (strategy.tyre_compound())
+            {
+            case structure::DRY:
+                SPDLOG_DEBUG("Press left to dry tyre");
+                direct_input_.press("left", 1, 10ms);
+                SPDLOG_DEBUG("Press left to dry tyre -- DONE");
+                break;
+            case structure::WET:
+                SPDLOG_DEBUG("Press left to wet tyre");
+                direct_input_.press("right", 1, 10ms);
+                SPDLOG_DEBUG("Press left to wet tyre -- DONE");
+                break;
+            default:;
+            }
         }
     }
     catch (sys::system_error &ex)
     {
         SPDLOG_INFO("strategy_setter do_set system_error: {}", ex.what());
     }
+}
+
+bool strategy_setter::do_acc_foreground()
+{
+    using namespace std::chrono_literals;
+
+    auto window_enumerator = [](HWND hwnd, LPARAM param) -> BOOL {
+        std::string window_text;
+        window_text.resize(GetWindowTextLength(hwnd));
+
+        GetWindowText(hwnd, window_text.data(), window_text.size() + 1);
+
+        if (window_text.find("AC2") != std::string::npos)
+        {
+            SPDLOG_DEBUG("found ac2 window");
+            (*reinterpret_cast<HWND *>(param)) = hwnd;
+        }
+
+        return TRUE;
+    };
+
+    HWND ac2_win = nullptr;
+    if (!EnumWindows(window_enumerator, reinterpret_cast<LPARAM>(&ac2_win)))
+    {
+        SPDLOG_ERROR("EnumWindows fail");
+        return false;
+    }
+
+    if (ac2_win == nullptr)
+    {
+        SPDLOG_ERROR("EnumWindows fail");
+        return false;
+    }
+
+    if (GetForegroundWindow() == ac2_win)
+    {
+        SPDLOG_INFO("AC2 already foreground");
+        return true;
+    }
+
+    if (!SetForegroundWindow(ac2_win))
+    {
+        SPDLOG_ERROR("SetForegroundWindow fail error: {}", std::system_category().message(GetLastError()));
+        return false;
+    }
+
+    std::this_thread::sleep_for(200ms);
+    if (GetForegroundWindow() != ac2_win)
+    {
+        SPDLOG_INFO("do AC2 foreground fail");
+        return false;
+    }
+
+    return true;
+}
+
+bool strategy_setter::is_floating_point_close(float a, float b)
+{
+    return std::abs(a - b) < 1e-5;
 }
 } // namespace acc_engineer::strategy_setter

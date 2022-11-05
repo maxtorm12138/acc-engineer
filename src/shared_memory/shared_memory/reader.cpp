@@ -30,12 +30,27 @@ frame reader::snapshot()
         .status = graphic_content.status,
         .abs = graphic_content.abs,
         .tc = graphic_content.tc,
-		.tc2 = graphic_content.tc_cut,
+        .tc2 = graphic_content.tc_cut,
         .abs_in_action = physics_content.abs,
         .tc_in_action = physics_content.tc,
-        .engine_map = graphic_content.engine_map
-    };
+        .engine_map = graphic_content.engine_map};
 
     return frame;
+}
+
+float reader::mfd_fuel_to_add() const
+{
+    return graphic_content_->mfd_fuel_to_add;
+}
+
+structure::WheelInfo reader::mfd_tyre_pressure() const
+{
+    structure::WheelInfo tyre_pressure;
+    tyre_pressure.set_left_front(graphic_content_->mfd_tyre_pressure_lf);
+    tyre_pressure.set_right_front(graphic_content_->mfd_tyre_pressure_rf);
+    tyre_pressure.set_left_rear(graphic_content_->mfd_tyre_pressure_lr);
+    tyre_pressure.set_right_rear(graphic_content_->mfd_tyre_pressure_rr);
+
+    return tyre_pressure;
 }
 } // namespace acc_engineer::shared_memory
