@@ -28,7 +28,7 @@ namespace sys = boost::system;
 class direct_input : public boost::noncopyable
 {
 public:
-    bool press(std::string_view key, uint64_t presses = 1, std::chrono::steady_clock::duration interval = std::chrono::milliseconds(0));
+	static bool press(std::string_view key, uint64_t presses = 1, std::chrono::steady_clock::duration interval = std::chrono::milliseconds(0));
 
     static bool key_down(std::string_view key);
 
@@ -38,7 +38,7 @@ public:
     bool press_calculate(std::tuple<std::string_view, std::string_view> keys, T current, T target, std::chrono::steady_clock::duration interval = std::chrono::milliseconds(0),
         std::enable_if_t<std::is_floating_point_v<T>, int *> = nullptr)
     {
-        const int presses = std::rint((target - current) * 10.f);
+        const int presses = std::lrint((target - current) * 10.f);
         if (presses < 0)
         {
             return press(std::get<0>(keys), -presses, interval);
@@ -87,6 +87,7 @@ private:
 
     bool is_floating_point_close(float a, float b);
 
+    float clamp_pressure(float original);
 private:
     net::experimental::concurrent_channel<void(sys::error_code, structure::Strategy, uint64_t version)> strategy_channel_;
     shared_memory::reader reader_;

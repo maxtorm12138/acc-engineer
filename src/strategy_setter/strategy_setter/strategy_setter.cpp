@@ -144,73 +144,123 @@ void strategy_setter::do_set()
             }
 
             // step 2 show MFD
-            SPDLOG_DEBUG("Press P to show MFD");
-            direct_input_.press("p", 1, 10ms);
-            SPDLOG_DEBUG("Press P to show MFD -- DONE");
+            {
+				SPDLOG_DEBUG("Press P to show MFD");
+            	direct_input_.press("p", 1, 10ms);
+            	SPDLOG_DEBUG("Press P to show MFD -- DONE");
+            }
 
             // step 3 add fuel
-            // step 3a Go down 2 times to the fuel line
-            SPDLOG_DEBUG("Press down 2 times to fuel line");
-            direct_input_.press("down", 2, 10ms);
-            SPDLOG_DEBUG("Press down 2 times to fuel line -- DONE");
+            {
+				SPDLOG_DEBUG("Press down 2 times to fuel line");
+            	direct_input_.press("down", 2, 10ms);
+            	SPDLOG_DEBUG("Press down 2 times to fuel line -- DONE");
 
-            // step 3b press to add fuel
-            auto mfd_fuel = static_cast<int>(reader_.mfd_fuel_to_add());
-            auto target_fuel = static_cast<int>(strategy.fuel());
-            SPDLOG_DEBUG("Add fuel mfd_fuel: {} target_fuel: {}", mfd_fuel, target_fuel);
-            direct_input_.press_calculate({"left", "right"}, mfd_fuel, target_fuel, 10ms);
-            SPDLOG_DEBUG("Add fuel mfd_fuel: {} target_fuel: {} -- DONE", mfd_fuel, target_fuel);
+				auto mfd_fuel = static_cast<int>(reader_.mfd_fuel_to_add());
+            	auto target_fuel = static_cast<int>(std::clamp(strategy.fuel(), 0.f, reader_.fuel_tank_capacity()));
+            	SPDLOG_DEBUG("Add fuel mfd_fuel: {} target_fuel: {}", mfd_fuel, target_fuel);
+            	direct_input_.press_calculate({"left", "right"}, mfd_fuel, target_fuel, 10ms);
+            	SPDLOG_DEBUG("Add fuel mfd_fuel: {} target_fuel: {} -- DONE", mfd_fuel, target_fuel);
+            }
+
 
             // step 4  check if tyre set is on wet, tyre set will be disable
             //         so going down 5 times will be FR instead of FL
+			int next_down_times = 0;
+            {
+				SPDLOG_DEBUG("Press down 5 times to FR OR FL line");
+            	direct_input_.press("down", 5, 10ms);
+            	SPDLOG_DEBUG("Press down 5 times to FR OR FL line -- DONE");
 
-            // step 4a press down 5 times
-            SPDLOG_DEBUG("Press down 5 times to FR OR FL line");
-            direct_input_.press("down", 5, 10ms);
-            SPDLOG_DEBUG("Press down 5 times to FR OR FL line -- DONE");
+            	auto old_rf = reader_.mfd_tyre_pressures().right_front();
+            	SPDLOG_DEBUG("Press left 1 times");
+            	direct_input_.press("left", 1, 10ms);
+            	SPDLOG_DEBUG("Press left 1 times -- DONE");
+            	auto new_rf = reader_.mfd_tyre_pressures().right_front();
 
-            // step 4b press left 1 time to change tyre pressure
-            auto old_rf = reader_.mfd_tyre_pressure().right_front();
-            SPDLOG_DEBUG("Press left 1 times");
-            direct_input_.press("left", 1, 10ms);
-            SPDLOG_DEBUG("Press left 1 times -- DONE");
-            auto new_rf = reader_.mfd_tyre_pressure().right_front();
+            	bool is_mfd_wet_tyre = !is_floating_point_close(old_rf, new_rf);
 
-            bool is_mfd_wet_tyre = !is_floating_point_close(old_rf, new_rf);
+            	SPDLOG_DEBUG("is_mfd_wet_tyre: {} old_rf: {} new_rf: {}", is_mfd_wet_tyre, old_rf, new_rf);
+            	SPDLOG_DEBUG("Press right 1 times");
+            	direct_input_.press("right", 1, 10ms);
+            	SPDLOG_DEBUG("Press right 1 times -- DONE");
 
-            // step 4c press right 1 time to restore tyre pressure
-            SPDLOG_DEBUG("is_mfd_wet_tyre: {} old_rf: {} new_rf: {}", is_mfd_wet_tyre, old_rf, new_rf);
-            SPDLOG_DEBUG("Press right 1 times");
-            direct_input_.press("right", 1, 10ms);
-            SPDLOG_DEBUG("Press right 1 times -- DONE");
+            	SPDLOG_DEBUG("Press up 5 times to fuel line");
+            	direct_input_.press("up", 5, 10ms);
+            	SPDLOG_DEBUG("Press up 5 times to fuel line -- DONE");
+				next_down_times = is_mfd_wet_tyre ? 2 : 3;
+            }
+	
+            // step 5 change tyre compound
+            {
+				SPDLOG_DEBUG("Press down {} times to compound line", next_down_times);
+            	direct_input_.press("down", next_down_times, 10ms);
+            	SPDLOG_DEBUG("Press down {} times to compound line -- done", next_down_times);
 
-            // step 4d back to fuel line
-            SPDLOG_DEBUG("Press up 5 times to fuel line");
-            direct_input_.press("up", 5, 10ms);
-            SPDLOG_DEBUG("Press up 5 times to fuel line -- DONE");
+            	switch (strategy.tyre_compound())
+            	{
+            	case structure::DRY:
+            	    SPDLOG_DEBUG("Press left to dry tyre");
+            	    direct_input_.press("left", 1, 10ms);
+            	    SPDLOG_DEBUG("Press left to dry tyre -- DONE");
+					// pressure data might be invalidate (pressing left when on
+					// dry compound set pressure as currently used)
+            	    break;
+            	case structure::WET:
+            	    SPDLOG_DEBUG("Press left to wet tyre");
+            	    direct_input_.press("right", 1, 10ms);
+            	    SPDLOG_DEBUG("Press left to wet tyre -- DONE");
+            	    break;
+            	default:;
+            }
+
+            }
+            // step 6 change tyre set
+            {
+				if (strategy.tyre_set() == structure::DRY)
+            	{
+            	    SPDLOG_DEBUG("Press up to tyre set line");
+            	    direct_input_.press("up", 1, 10ms);
+            	    SPDLOG_DEBUG("Press up to tyre set line -- DONE");
+
+            	    auto current_tyre_set = reader_.current_tyre_set();
+            	    auto mfd_tyre_set = reader_.mfd_tyre_set();
+					SPDLOG_DEBUG("mfd_tyre_set: {} current_tyre_set: {}", mfd_tyre_set, current_tyre_set);
+            	    next_down_times = 3;
+            	}
+            	else
+            	{
+            	    next_down_times = 2;
+            	}
+            }
+
+            // step 7 change tyre pressure
+            {
+				SPDLOG_DEBUG("Press down {} times to left front tyre line", next_down_times);
+            	direct_input_.press("down", next_down_times, 10ms);
+            	SPDLOG_DEBUG("Press down {} times to left front tyre line -- DONE", next_down_times);
+
+            	auto mfd_tyre_pressure = reader_.mfd_tyre_pressures();
+            	auto strategy_tyre_pressure = strategy.tyre_pressures();
+            	// clamp to safe value between 20.4 and 35.0
+            	strategy_tyre_pressure.set_left_front(clamp_pressure(strategy_tyre_pressure.left_front()));
+            	strategy_tyre_pressure.set_right_front(clamp_pressure(strategy_tyre_pressure.right_front()));
+            	strategy_tyre_pressure.set_left_rear(clamp_pressure(strategy_tyre_pressure.left_rear()));
+            	strategy_tyre_pressure.set_right_rear(clamp_pressure(strategy_tyre_pressure.right_rear()));
+
+            	SPDLOG_DEBUG("mfd_tyre_pressure: [{}] strategy_tyre_pressure: [{}]", mfd_tyre_pressure.ShortDebugString(), strategy_tyre_pressure.ShortDebugString());
+				
+            	direct_input_.press_calculate({"left", "right"}, mfd_tyre_pressure.left_front(), strategy_tyre_pressure.left_front(), 10ms);
+            	direct_input_.press("down", 1, 10ms);
+            	direct_input_.press_calculate({"left", "right"}, mfd_tyre_pressure.right_front(), strategy_tyre_pressure.right_front(), 10ms);
+            	direct_input_.press("down", 1, 10ms);
+            	direct_input_.press_calculate({"left", "right"}, mfd_tyre_pressure.left_rear(), strategy_tyre_pressure.left_rear(), 10ms);
+            	direct_input_.press("down", 1, 10ms);
+            	direct_input_.press_calculate({"left", "right"}, mfd_tyre_pressure.right_rear(), strategy_tyre_pressure.right_rear(), 10ms);
+            }
+
 
             strategy_version_ = version;
-
-            int next_down_times = is_mfd_wet_tyre ? 2 : 3;
-
-            SPDLOG_DEBUG("Press down {} times to compound line", next_down_times);
-            direct_input_.press("down", next_down_times, 10ms);
-            SPDLOG_DEBUG("Press down {} times to compound line -- done", next_down_times);
-
-            switch (strategy.tyre_compound())
-            {
-            case structure::DRY:
-                SPDLOG_DEBUG("Press left to dry tyre");
-                direct_input_.press("left", 1, 10ms);
-                SPDLOG_DEBUG("Press left to dry tyre -- DONE");
-                break;
-            case structure::WET:
-                SPDLOG_DEBUG("Press left to wet tyre");
-                direct_input_.press("right", 1, 10ms);
-                SPDLOG_DEBUG("Press left to wet tyre -- DONE");
-                break;
-            default:;
-            }
         }
     }
     catch (sys::system_error &ex)
@@ -227,7 +277,7 @@ bool strategy_setter::do_acc_foreground()
         std::string window_text;
         window_text.resize(GetWindowTextLength(hwnd));
 
-        GetWindowText(hwnd, window_text.data(), window_text.size() + 1);
+        GetWindowText(hwnd, window_text.data(), static_cast<int>(window_text.size() + 1));
 
         if (window_text.find("AC2") != std::string::npos)
         {
@@ -276,5 +326,10 @@ bool strategy_setter::do_acc_foreground()
 bool strategy_setter::is_floating_point_close(float a, float b)
 {
     return std::abs(a - b) < 1e-5;
+}
+
+float strategy_setter::clamp_pressure(float original)
+{
+    return std::clamp(original, 20.4f, 35.0f);
 }
 } // namespace acc_engineer::strategy_setter

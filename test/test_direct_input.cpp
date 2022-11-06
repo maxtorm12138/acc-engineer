@@ -16,6 +16,10 @@ net::awaitable<void> co_main()
 
     structure::Strategy strategy;
     strategy.set_fuel(20.);
+    strategy.mutable_tyre_pressures()->set_left_front(21);
+    strategy.mutable_tyre_pressures()->set_right_front(22);
+    strategy.mutable_tyre_pressures()->set_left_rear(23);
+    strategy.mutable_tyre_pressures()->set_right_rear(24);
     co_await setter.set(1, strategy);
 
     net::steady_timer timer(executor);

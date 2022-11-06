@@ -43,7 +43,12 @@ float reader::mfd_fuel_to_add() const
     return graphic_content_->mfd_fuel_to_add;
 }
 
-structure::WheelInfo reader::mfd_tyre_pressure() const
+float reader::fuel_tank_capacity() const
+{
+    return static_content_->max_fuel;
+}
+
+structure::WheelInfo reader::mfd_tyre_pressures() const
 {
     structure::WheelInfo tyre_pressure;
     tyre_pressure.set_left_front(graphic_content_->mfd_tyre_pressure_lf);
@@ -52,5 +57,15 @@ structure::WheelInfo reader::mfd_tyre_pressure() const
     tyre_pressure.set_right_rear(graphic_content_->mfd_tyre_pressure_rr);
 
     return tyre_pressure;
+}
+
+int reader::current_tyre_set() const
+{
+    return graphic_content_->current_tyre_set;
+}
+
+int reader::mfd_tyre_set() const
+{
+    return graphic_content_->mfd_tyre_set;
 }
 } // namespace acc_engineer::shared_memory

@@ -19,7 +19,13 @@ public:
 
     [[nodiscard]] float mfd_fuel_to_add() const;
 
-    [[nodiscard]] structure::WheelInfo mfd_tyre_pressure() const;
+    [[nodiscard]] float fuel_tank_capacity() const;
+
+    [[nodiscard]] structure::WheelInfo mfd_tyre_pressures() const;
+
+    [[nodiscard]] int current_tyre_set() const;
+
+    [[nodiscard]] int mfd_tyre_set() const;
 
 private:
     boost::interprocess::windows_shared_memory physics_memory_;
