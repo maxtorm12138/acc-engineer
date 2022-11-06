@@ -85,9 +85,12 @@ private:
 
     bool do_acc_foreground();
 
-    bool is_floating_point_close(float a, float b);
+    bool is_floating_point_close(float a, float b) const;
 
-    float clamp_pressure(float original);
+    float clamp_pressure(float original) const;
+
+    void change_tyres(structure::Strategy &strategy);
+
 private:
     net::experimental::concurrent_channel<void(sys::error_code, structure::Strategy, uint64_t version)> strategy_channel_;
     shared_memory::reader reader_;

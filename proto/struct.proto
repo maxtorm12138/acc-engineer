@@ -9,8 +9,9 @@ message Driver
 
 enum TyreCompound
 {
-  DRY = 0;
-  WET = 1;
+  UNKNOWN = 0;
+  DRY = 1;
+  WET = 2;
 }
 
 message WheelInfo
@@ -34,11 +35,16 @@ message Strategy
 {
   float fuel = 1;
   int32 tyre_set = 2;
-  TyreCompound tyre_compound = 3;
-  WheelInfo tyre_pressures = 4;
-  int32 brake_pad = 8;
-  bool repair_bodywork = 9;
-  bool repair_suspension = 10;
+
+  bool change_tyre = 3;
+  TyreCompound tyre_compound = 4;
+  WheelInfo tyre_pressures = 5;
+
+  bool change_brake = 6;
+  int32 driver_offset = 7;
+  bool repair = 8;
+
+  bool back_to_relative = 9;
 }
 
 message DriverInput
