@@ -12,10 +12,10 @@ namespace acc_engineer::ui
 {
 	enum class tyre_type
 	{
-		FrontLeft = 0,
-		FrontRight = 1,
-		RearLeft = 2,
-		RearRight = 3
+		LeftFront = 0,
+		RightFront = 1,
+		LeftRear = 2,
+		RightRear = 3
 	};
 
 	class telemetry_tyre final : public QFrame
@@ -25,6 +25,19 @@ namespace acc_engineer::ui
 		explicit telemetry_tyre(QWidget *parent = nullptr);
 
 		void set_type(tyre_type type);
+
+		void set_tyre_pressure(float pressure) const;
+
+		void set_tyre_temperature(float temperature) const;
+
+		void set_brake_temperature(float temperature) const;
+
+		void set_pad_compound(int compound) const;
+
+		void set_pad_wear(float wear) const;
+
+		void set_disc_wear(float wear) const;
+
 	private:
 		Ui::TelemetryTyre *ui_;
 	};
