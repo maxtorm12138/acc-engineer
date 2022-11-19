@@ -15,6 +15,7 @@ app::app(QApplication *application)
     , connect_(new ui::connect(connection_logic_))
     , driver_input_(new ui::driver_input)
     , telemetry_(new ui::telemetry)
+    , strategy_(new ui::strategy)
 {}
 
 void app::start()

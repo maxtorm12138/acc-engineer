@@ -24,6 +24,7 @@
 #include "ui/connect.h"
 #include "ui/driver_input.h"
 #include "ui/telemetry.h"
+#include "ui/strategy.h"
 
 namespace acc_engineer {
 namespace net = boost::asio;
@@ -62,6 +63,7 @@ private:
     ui::connect *connect_;
     ui::driver_input *driver_input_;
     ui::telemetry *telemetry_;
+    ui::strategy *strategy_;
 };
 } // namespace acc_engineer
 #endif
