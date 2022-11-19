@@ -38,17 +38,17 @@ frame reader::snapshot()
     return frame;
 }
 
-float reader::mfd_fuel_to_add() const
+float reader::mfd_fuel_to_add() const noexcept
 {
     return graphic_content_->mfd_fuel_to_add;
 }
 
-float reader::fuel_tank_capacity() const
+float reader::fuel_tank_capacity() const noexcept
 {
     return static_content_->max_fuel;
 }
 
-structure::WheelInfo reader::mfd_tyre_pressures() const
+structure::WheelInfo reader::mfd_tyre_pressures() const noexcept
 {
     structure::WheelInfo tyre_pressure;
     tyre_pressure.set_left_front(graphic_content_->mfd_tyre_pressure_lf);
@@ -59,13 +59,18 @@ structure::WheelInfo reader::mfd_tyre_pressures() const
     return tyre_pressure;
 }
 
-int reader::current_tyre_set() const
+int reader::current_tyre_set() const noexcept
 {
     return graphic_content_->current_tyre_set;
 }
 
-int reader::mfd_tyre_set() const
+int reader::mfd_tyre_set() const noexcept
 {
     return graphic_content_->mfd_tyre_set;
+}
+
+bool reader::driving() const noexcept
+{
+    return graphic_content_->status == acc_status::live && graphic_content_->session != acc_session_type::unknown && graphic_content_->is_in_pit_lane != 1;
 }
 } // namespace acc_engineer::shared_memory

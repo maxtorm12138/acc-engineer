@@ -17,15 +17,17 @@ public:
 
     [[nodiscard]] frame snapshot();
 
-    [[nodiscard]] float mfd_fuel_to_add() const;
+    [[nodiscard]] float mfd_fuel_to_add() const noexcept;
 
-    [[nodiscard]] float fuel_tank_capacity() const;
+    [[nodiscard]] float fuel_tank_capacity() const noexcept;
 
-    [[nodiscard]] structure::WheelInfo mfd_tyre_pressures() const;
+    [[nodiscard]] structure::WheelInfo mfd_tyre_pressures() const noexcept;
 
-    [[nodiscard]] int current_tyre_set() const;
+    [[nodiscard]] int current_tyre_set() const noexcept;
 
-    [[nodiscard]] int mfd_tyre_set() const;
+    [[nodiscard]] int mfd_tyre_set() const noexcept;
+
+    [[nodiscard]] bool driving() const noexcept;
 
 private:
     boost::interprocess::windows_shared_memory physics_memory_;

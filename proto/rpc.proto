@@ -7,6 +7,13 @@ extend google.protobuf.MessageOptions {
   optional bool no_reply = 50001;
 }
 
+enum MessageFlag
+{
+	START = 0;
+	REQUEST = 1;
+	NO_REPLY = 2;
+}
+
 message Cookie
 {
 	uint64 error_code = 1;
