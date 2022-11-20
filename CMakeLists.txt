@@ -125,11 +125,15 @@ if (WIN32 AND ACC_ENGINEER_BUILD_CLIENT)
         client/src/ui/telemetry.h
         client/src/ui/telemetry_tyre.cpp
         client/src/ui/telemetry_tyre.h
+        "client/src/ui/component/setter_button.cpp"
+        "client/src/ui/component/setter_button.h"
+        "client/src/ui/component/setter_spin_box.cpp"
+        "client/src/ui/component/setter_spin_box.h"
         client/src/logic/logic.cpp
         client/src/logic/logic.h
         client/src/app.cpp
         client/src/app.h
-    )
+      )
 
     add_executable(acc-engineer client/src/main.cpp ${ACC_ENGINEER_CLIENT_SRCS})
     target_link_directories(acc-engineer PRIVATE ${QWT_LIBRARY_DIR})

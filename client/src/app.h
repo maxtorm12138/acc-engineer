@@ -23,6 +23,9 @@
 #include "ui/telemetry.h"
 #include "ui/strategy.h"
 
+// strategy setter
+#include <strategy_setter/strategy_setter.h>
+
 namespace acc_engineer {
 namespace net = boost::asio;
 
@@ -33,24 +36,25 @@ class app final : public QApplication
 public:
     explicit app(int argc, char *argv[]);
 
+    ~app() override;
+
 private:
     void net_main();
 
-    void shared_memory_main();
-
-private slots:
-    void quit();
+    void telemetry_collect_main();
 
 private:
     std::atomic<bool> running_;
 
     net::io_context io_context_;
-    std::optional<net::executor_work_guard<net::io_context::executor_type>> guard_;
+    net::executor_work_guard<net::io_context::executor_type> guard_;
+
+    strategy_setter::strategy_setter strategy_setter_;
 
     rpc::methods methods_;
 
     std::jthread net_thread_;
-    std::jthread shared_memory_thread_;
+    std::jthread telemetry_collect_thread_;
 
     ui::connect *connect_;
     ui::driver_input *driver_input_;

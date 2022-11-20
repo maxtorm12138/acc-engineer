@@ -19,11 +19,24 @@ app::app(int argc, char *argv[])
     : QApplication(argc, argv)
     , running_(true)
     , io_context_(1)
+    , guard_(net::make_work_guard(io_context_))
+    , strategy_setter_(io_context_.get_executor())
+    , strategy_(new ui::strategy)
 {
-    connect(this, &QGuiApplication::lastWindowClosed, this, &app::quit);
+    connect(this, &QGuiApplication::lastWindowClosed, this, &QApplication::quit);
 
     net_thread_ = std::jthread([this]() { net_main(); });
-    shared_memory_thread_ = std::jthread([this]() { shared_memory_main(); });
+    telemetry_collect_thread_ = std::jthread([this]() { telemetry_collect_main(); });
+
+    strategy_->show();
+    SPDLOG_TRACE("application created");
+}
+
+app::~app()
+{
+    SPDLOG_TRACE("application destroyed");
+    running_ = false;
+    guard_.reset();
 }
 
 void app::net_main()
@@ -34,21 +47,20 @@ void app::net_main()
         SPDLOG_TRACE("net_main ended");
     };
 
-    guard_.emplace(make_work_guard(io_context_));
     io_context_.run();
 }
 
-void app::shared_memory_main()
+void app::telemetry_collect_main()
 {
     using namespace std::chrono_literals;
     using std::chrono::duration_cast;
     using std::chrono::milliseconds;
     using std::chrono::nanoseconds;
 
-    SPDLOG_TRACE("shared_memory_main started");
+    SPDLOG_TRACE("telemetry_collect_main started");
     BOOST_SCOPE_EXIT_ALL(&)
     {
-        SPDLOG_TRACE("shared_memory_main ended");
+        SPDLOG_TRACE("telemetry_collect_main ended");
     };
 
     timeBeginPeriod(1);
@@ -91,7 +103,7 @@ void app::shared_memory_main()
 
             sample_start_time = std::chrono::high_resolution_clock::now();
 
-            SPDLOG_DEBUG("total_cost: {}ns next_timeslice: {}ns", total_cost.count(), current_timeslice.count());
+            SPDLOG_TRACE("total_cost: {}ns next_timeslice: {}ns", total_cost.count(), current_timeslice.count());
         };
 
         if (!reader.driving())
@@ -102,14 +114,6 @@ void app::shared_memory_main()
 
         next_timeslice = 10ms;
     }
-}
-
-void app::quit()
-{
-    SPDLOG_DEBUG("application quit");
-    running_ = false;
-    guard_->reset();
-    QApplication::quit();
 }
 
 } // namespace acc_engineer

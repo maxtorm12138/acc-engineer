@@ -28,7 +28,7 @@ namespace sys = boost::system;
 class direct_input : public boost::noncopyable
 {
 public:
-	static bool press(std::string_view key, uint64_t presses = 1, std::chrono::steady_clock::duration interval = std::chrono::milliseconds(0));
+    static bool press(std::string_view key, uint64_t presses = 1, std::chrono::steady_clock::duration interval = std::chrono::milliseconds(0));
 
     static bool key_down(std::string_view key);
 
@@ -50,8 +50,8 @@ public:
     }
 
     template<typename T>
-    requires std::is_integral_v<T>
-    bool press_calculate(std::tuple<std::string_view, std::string_view> keys, T current, T target, std::chrono::steady_clock::duration interval = std::chrono::milliseconds(0),
+        requires std::is_integral_v<T> bool
+    press_calculate(std::tuple<std::string_view, std::string_view> keys, T current, T target, std::chrono::steady_clock::duration interval = std::chrono::milliseconds(0),
         std::enable_if_t<std::is_integral_v<T>, int *> = nullptr)
     {
         const int presses = target - current;
@@ -74,7 +74,7 @@ private:
 class strategy_setter : public boost::noncopyable
 {
 public:
-    strategy_setter(net::any_io_executor &executor);
+    strategy_setter(net::any_io_executor executor);
 
     ~strategy_setter();
 
