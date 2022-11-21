@@ -24,9 +24,13 @@ FetchContent_Declare(
     GIT_TAG        1.1.1
 )
 
-FetchContent_MakeAvailable(spdlog msft_proxy)
+FetchContent_Declare(
+    Boost
+    GIT_REPOSITORY https://github.com/boostorg/boost.git
+    GIT_TAG        boost-1.81.0.beta1
+)
 
-find_package(Boost 1.80.0 COMPONENTS program_options REQUIRED)
+FetchContent_MakeAvailable(spdlog msft_proxy Boost)
 
 set(Protobuf_USE_STATIC_LIBS ON)
 find_package(Protobuf REQUIRED)
@@ -74,7 +78,7 @@ set(ACC_ENGINEER_RPC_SRCS
         ${ACC_ENGINEER_RPC_PROTO_FILES})
 
 add_library(acc-engineer-rpc ${ACC_ENGINEER_RPC_SRCS})
-target_link_libraries(acc-engineer-rpc PRIVATE Boost::boost)
+target_link_libraries(acc-engineer-rpc PRIVATE Boost::asio Boost::scope_exit)
 target_link_libraries(acc-engineer-rpc PRIVATE protobuf::libprotobuf)
 target_link_libraries(acc-engineer-rpc PRIVATE spdlog::spdlog)
 target_link_libraries(acc-engineer-rpc PRIVATE msft_proxy)
@@ -177,7 +181,7 @@ if (ACC_ENGINEER_BUILD_SERVER)
             server/src/service/service.h)
     add_executable(acc-engineer-server ${ACC_ENGINEER_SERVER_SRCS} server/src/main.cpp)
     target_link_libraries(acc-engineer-server PRIVATE acc-engineer-rpc)
-    target_link_libraries(acc-engineer-server PRIVATE Boost::boost Boost::program_options)
+    target_link_libraries(acc-engineer-server PRIVATE Boost::asio Boost::program_options)
     target_link_libraries(acc-engineer-server PRIVATE protobuf::libprotobuf)
     target_link_libraries(acc-engineer-server PRIVATE spdlog::spdlog)
     target_include_directories(acc-engineer-server PRIVATE ${CMAKE_CURRENT_BINARY_DIR} server/src/)
@@ -193,7 +197,7 @@ function(ADD_ACC_ENGINEER_TEST)
     target_include_directories(${ACC_ENGINEER_TEST_NAME} PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
     target_compile_definitions(${ACC_ENGINEER_TEST_NAME} PRIVATE SPDLOG_ACTIVE_LEVEL=${ACC_ENGINEER_LOG_LEVEL} BOOST_ASIO_NO_DEPRECATED)
     target_link_libraries(${ACC_ENGINEER_TEST_NAME} PRIVATE acc-engineer-rpc)
-    target_link_libraries(${ACC_ENGINEER_TEST_NAME} PRIVATE Boost::boost Boost::program_options)
+    target_link_libraries(${ACC_ENGINEER_TEST_NAME} PRIVATE Boost::asio Boost::program_options)
     target_link_libraries(${ACC_ENGINEER_TEST_NAME} PRIVATE protobuf::libprotobuf)
     target_link_libraries(${ACC_ENGINEER_TEST_NAME} PRIVATE spdlog::spdlog)
 
