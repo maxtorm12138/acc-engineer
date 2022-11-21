@@ -30,36 +30,67 @@ FetchContent_Declare(
     GIT_TAG        boost-1.81.0.beta1
 )
 
-FetchContent_MakeAvailable(spdlog msft_proxy Boost)
+FetchContent_Declare(
+    mrpc
+    GIT_REPOSITORY https://github.com/maxtorm12138/mrpc.git
+    GIT_TAG develop
+)
+
+FetchContent_MakeAvailable(spdlog msft_proxy Boost mrpc)
+
+message("${MRPC_PROTO_IMPORT_PATH}")
 
 set(Protobuf_USE_STATIC_LIBS ON)
 find_package(Protobuf REQUIRED)
 
-function(generate_proto PROTO_ROOT PROTO_FILE GENERATE_PATH OUT_FILES)
-    get_filename_component(PROTO_FILE ${PROTO_FILE} ABSOLUTE)
-    get_filename_component(PROTO_ROOT ${PROTO_ROOT} ABSOLUTE)
-    get_filename_component(PROTO_FILE_NAME ${PROTO_FILE} NAME)
+function(generate_proto_v1)
+    cmake_parse_arguments(GENERATE_PROTO "" "GENERATE_PATH;FILE;OUTPUT_FILE" "IMPORT_PATH" ${ARGN})
 
-    string(REPLACE ".proto" ".pb.cc" PROTO_CPP_SRC "${GENERATE_PATH}/${PROTO_FILE_NAME}")
-    string(REPLACE ".proto" ".pb.h" PROTO_CPP_HDR "${GENERATE_PATH}/${PROTO_FILE_NAME}")
+    get_filename_component(GENERATE_PROTO_GENERATE_PATH ${GENERATE_PROTO_GENERATE_PATH} ABSOLUTE)
+    file(TO_NATIVE_PATH ${GENERATE_PROTO_GENERATE_PATH} GENERATE_PROTO_GENERATE_PATH)
 
-    file(TO_NATIVE_PATH ${PROTO_FILE} NATIVE_PROTO_FILE)
-    file(TO_NATIVE_PATH ${GENERATE_PATH} NATIVE_GENERATE_PATH)
-    file(TO_NATIVE_PATH ${PROTO_ROOT} NATIVE_PROTO_ROOT)
+    get_filename_component(GENERATE_PROTO_FILE ${GENERATE_PROTO_FILE} ABSOLUTE)
+    file(TO_NATIVE_PATH ${GENERATE_PROTO_FILE} GENERATE_PROTO_FILE)
 
-    file(MAKE_DIRECTORY ${NATIVE_GENERATE_PATH})
+    get_filename_component(GENERATE_PROTO_FILE_NAME ${GENERATE_PROTO_FILE} NAME)
+    string(REPLACE ".proto" ".pb.cc" GENERATE_PROTO_CPP_SRC "${GENERATE_PROTO_GENERATE_PATH}/${GENERATE_PROTO_FILE_NAME}")
+    string(REPLACE ".proto" ".pb.h" GENERATE_PROTO_CPP_HDR "${GENERATE_PROTO_GENERATE_PATH}/${GENERATE_PROTO_FILE_NAME}")
 
-    execute_process(COMMAND ${PROTOBUF_PROTOC_EXECUTABLE} --proto_path=${NATIVE_PROTO_ROOT} --cpp_out=${NATIVE_GENERATE_PATH} ${NATIVE_PROTO_FILE} RESULT_VARIABLE RV)
+    file(MAKE_DIRECTORY ${GENERATE_PROTO_GENERATE_PATH})
+    
+
+    foreach(IMPORT_PATH ${GENERATE_PROTO_IMPORT_PATH})
+        get_filename_component(IMPORT_PATH ${IMPORT_PATH} ABSOLUTE)
+        file(TO_NATIVE_PATH ${IMPORT_PATH} IMPORT_PATH)
+        string(CONCAT IMPORT_ARG "-I" ${IMPORT_PATH})
+        list(APPEND PROTOC_ARGS ${IMPORT_ARG})
+    endforeach()
+    list(APPEND PROTOC_ARGS "--cpp_out=${GENERATE_PROTO_GENERATE_PATH}" "${GENERATE_PROTO_FILE}")
+
+    message("PROTOC_ARGS: ${PROTOC_ARGS}")
+
+    execute_process(COMMAND ${PROTOBUF_PROTOC_EXECUTABLE} ${PROTOC_ARGS} RESULT_VARIABLE RV)
 
     if (${RV})
         message(FATAL_ERROR "Generation of data model returned ${RV} for proto ${NATIVE_PROTO_FILE}")
     endif ()
-    set(${OUT_FILES} ${PROTO_CPP_SRC} ${PROTO_CPP_HDR} PARENT_SCOPE)
+    set(${GENERATE_PROTO_OUTPUT_FILE} ${GENERATE_PROTO_CPP_SRC} ${GENERATE_PROTO_CPP_HDR} PARENT_SCOPE)
+    
 endfunction()
 
-generate_proto(proto/ proto/rpc.proto ${CMAKE_CURRENT_BINARY_DIR}/proto ACC_ENGINEER_RPC_PROTO_FILES)
-generate_proto(proto/ proto/service.proto ${CMAKE_CURRENT_BINARY_DIR}/proto ACC_ENGINEER_SERVICE_PROTO_FILES)
-generate_proto(proto/ proto/struct.proto ${CMAKE_CURRENT_BINARY_DIR}/proto ACC_ENGINEER_STRUCT_PROTO_FILES)
+generate_proto_v1(
+    FILE proto/struct.proto
+    GENERATE_PATH ${CMAKE_CURRENT_BINARY_DIR}/proto
+    OUTPUT_FILE ACC_ENGINEER_STRUCT_PROTO_FILES
+    IMPORT_PATH proto/ ${MRPC_PROTO_IMPORT_PATH}
+)
+
+generate_proto_v1(
+    FILE proto/service.proto
+    GENERATE_PATH ${CMAKE_CURRENT_BINARY_DIR}/proto
+    OUTPUT_FILE ACC_ENGINEER_SERVICE_PROTO_FILES
+    IMPORT_PATH proto/ ${MRPC_PROTO_IMPORT_PATH}
+)
 
 set(ACC_ENGINEER_LOG_LEVEL CACHE STRING 3)
 
@@ -191,7 +222,7 @@ if (ACC_ENGINEER_BUILD_SERVER)
     endif ()
 endif()
 
-function(ADD_ACC_ENGINEER_TEST)
+function(add_acc_engineer_test)
     cmake_parse_arguments(ACC_ENGINEER_TEST "" "NAME" "FILES" ${ARGN})
     add_executable(${ACC_ENGINEER_TEST_NAME} ${ACC_ENGINEER_TEST_FILES})
     target_include_directories(${ACC_ENGINEER_TEST_NAME} PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
@@ -214,8 +245,8 @@ function(ADD_ACC_ENGINEER_TEST)
 endfunction()
 
 if (ACC_ENGINEER_BUILD_TESTS)
-    ADD_ACC_ENGINEER_TEST(NAME test_batch_task FILES test/test_batch_task.cpp)
-    ADD_ACC_ENGINEER_TEST(NAME test_client FILES test/test_client.cpp ${ACC_ENGINEER_SERVICE_PROTO_FILES})
-    ADD_ACC_ENGINEER_TEST(NAME test_direct_input FILES test/test_direct_input.cpp ${ACC_ENGINEER_STRUCT_PROTO_FILES})
-    ADD_ACC_ENGINEER_TEST(NAME test_high_precision_sleep FILES test/test_high_precision_sleep.cpp)
+    add_acc_engineer_test(NAME test_batch_task FILES test/test_batch_task.cpp)
+    add_acc_engineer_test(NAME test_client FILES test/test_client.cpp ${ACC_ENGINEER_SERVICE_PROTO_FILES})
+    add_acc_engineer_test(NAME test_direct_input FILES test/test_direct_input.cpp ${ACC_ENGINEER_STRUCT_PROTO_FILES})
+    add_acc_engineer_test(NAME test_high_precision_sleep FILES test/test_high_precision_sleep.cpp)
 endif()
