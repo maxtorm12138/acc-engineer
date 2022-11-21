@@ -43,7 +43,7 @@ message("${MRPC_PROTO_IMPORT_PATH}")
 set(Protobuf_USE_STATIC_LIBS ON)
 find_package(Protobuf REQUIRED)
 
-function(generate_proto_v1)
+function(generate_proto)
     cmake_parse_arguments(GENERATE_PROTO "" "GENERATE_PATH;FILE;OUTPUT_FILE" "IMPORT_PATH" ${ARGN})
 
     get_filename_component(GENERATE_PROTO_GENERATE_PATH ${GENERATE_PROTO_GENERATE_PATH} ABSOLUTE)
@@ -62,7 +62,7 @@ function(generate_proto_v1)
     foreach(IMPORT_PATH ${GENERATE_PROTO_IMPORT_PATH})
         get_filename_component(IMPORT_PATH ${IMPORT_PATH} ABSOLUTE)
         file(TO_NATIVE_PATH ${IMPORT_PATH} IMPORT_PATH)
-        string(CONCAT IMPORT_ARG "-I" ${IMPORT_PATH})
+        string(CONCAT IMPORT_ARG "--proto_path=" "${IMPORT_PATH}")
         list(APPEND PROTOC_ARGS ${IMPORT_ARG})
     endforeach()
     list(APPEND PROTOC_ARGS "--cpp_out=${GENERATE_PROTO_GENERATE_PATH}" "${GENERATE_PROTO_FILE}")
@@ -78,14 +78,14 @@ function(generate_proto_v1)
     
 endfunction()
 
-generate_proto_v1(
+generate_proto(
     FILE proto/struct.proto
     GENERATE_PATH ${CMAKE_CURRENT_BINARY_DIR}/proto
     OUTPUT_FILE ACC_ENGINEER_STRUCT_PROTO_FILES
     IMPORT_PATH proto/ ${MRPC_PROTO_IMPORT_PATH}
 )
 
-generate_proto_v1(
+generate_proto(
     FILE proto/service.proto
     GENERATE_PATH ${CMAKE_CURRENT_BINARY_DIR}/proto
     OUTPUT_FILE ACC_ENGINEER_SERVICE_PROTO_FILES

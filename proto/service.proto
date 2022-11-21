@@ -5,7 +5,7 @@ import "struct.proto";
 
 message Echo
 {
-  option(rpc.cmd_id) = 0;
+  option(mrpc.cmd_id) = 0;
 
   message Request
   {
@@ -20,7 +20,7 @@ message Echo
 
 message AuthenticationTCP
 {
-  option(rpc.cmd_id) = 1;
+  option(mrpc.cmd_id) = 1;
 
   message Request
   {
@@ -41,7 +41,7 @@ message AuthenticationTCP
 
 message AuthenticationUDP
 {
-  option(rpc.cmd_id) = 2;
+  option(mrpc.cmd_id) = 2;
 
   message Request
   {
@@ -62,8 +62,8 @@ message AuthenticationUDP
 
 message DriverUpdate
 {
-  option(rpc.cmd_id) = 3;
-  option(rpc.no_reply) = true;
+  option(mrpc.cmd_id) = 3;
+  option(mrpc.no_reply) = true;
 
   message Request
   {
@@ -78,8 +78,8 @@ message DriverUpdate
 
 message DriverTelemetryUpdate
 {
-  option(rpc.cmd_id) = 4;
-  option(rpc.no_reply) = true;
+  option(mrpc.cmd_id) = 4;
+  option(mrpc.no_reply) = true;
 
   message Request
   {
@@ -94,7 +94,7 @@ message DriverTelemetryUpdate
 
 message DriverStrategyUpdate
 {
-  option(rpc.cmd_id) = 5;
+  option(mrpc.cmd_id) = 5;
 
   message Request
   {
