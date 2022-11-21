@@ -1,6 +1,6 @@
 syntax = "proto3";
 package acc_engineer;
-import "rpc.proto";
+import "mrpc.proto";
 import "struct.proto";
 
 message Echo

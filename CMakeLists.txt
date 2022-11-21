@@ -12,6 +12,8 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 find_package(Qt6 REQUIRED COMPONENTS Core Widgets OpenGL REQUIRED)
 
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/)
+
 FetchContent_Declare(
   spdlog
   GIT_REPOSITORY https://github.com/gabime/spdlog.git
@@ -42,41 +44,7 @@ message("${MRPC_PROTO_IMPORT_PATH}")
 
 set(Protobuf_USE_STATIC_LIBS ON)
 find_package(Protobuf REQUIRED)
-
-function(generate_proto)
-    cmake_parse_arguments(GENERATE_PROTO "" "GENERATE_PATH;FILE;OUTPUT_FILE" "IMPORT_PATH" ${ARGN})
-
-    get_filename_component(GENERATE_PROTO_GENERATE_PATH ${GENERATE_PROTO_GENERATE_PATH} ABSOLUTE)
-    file(TO_NATIVE_PATH ${GENERATE_PROTO_GENERATE_PATH} GENERATE_PROTO_GENERATE_PATH)
-
-    get_filename_component(GENERATE_PROTO_FILE ${GENERATE_PROTO_FILE} ABSOLUTE)
-    file(TO_NATIVE_PATH ${GENERATE_PROTO_FILE} GENERATE_PROTO_FILE)
-
-    get_filename_component(GENERATE_PROTO_FILE_NAME ${GENERATE_PROTO_FILE} NAME)
-    string(REPLACE ".proto" ".pb.cc" GENERATE_PROTO_CPP_SRC "${GENERATE_PROTO_GENERATE_PATH}/${GENERATE_PROTO_FILE_NAME}")
-    string(REPLACE ".proto" ".pb.h" GENERATE_PROTO_CPP_HDR "${GENERATE_PROTO_GENERATE_PATH}/${GENERATE_PROTO_FILE_NAME}")
-
-    file(MAKE_DIRECTORY ${GENERATE_PROTO_GENERATE_PATH})
-    
-
-    foreach(IMPORT_PATH ${GENERATE_PROTO_IMPORT_PATH})
-        get_filename_component(IMPORT_PATH ${IMPORT_PATH} ABSOLUTE)
-        file(TO_NATIVE_PATH ${IMPORT_PATH} IMPORT_PATH)
-        string(CONCAT IMPORT_ARG "--proto_path=" "${IMPORT_PATH}")
-        list(APPEND PROTOC_ARGS ${IMPORT_ARG})
-    endforeach()
-    list(APPEND PROTOC_ARGS "--cpp_out=${GENERATE_PROTO_GENERATE_PATH}" "${GENERATE_PROTO_FILE}")
-
-    message("PROTOC_ARGS: ${PROTOC_ARGS}")
-
-    execute_process(COMMAND ${PROTOBUF_PROTOC_EXECUTABLE} ${PROTOC_ARGS} RESULT_VARIABLE RV)
-
-    if (${RV})
-        message(FATAL_ERROR "Generation of data model returned ${RV} for proto ${NATIVE_PROTO_FILE}")
-    endif ()
-    set(${GENERATE_PROTO_OUTPUT_FILE} ${GENERATE_PROTO_CPP_SRC} ${GENERATE_PROTO_CPP_HDR} PARENT_SCOPE)
-    
-endfunction()
+include(GenerateProto)
 
 generate_proto(
     FILE proto/struct.proto
