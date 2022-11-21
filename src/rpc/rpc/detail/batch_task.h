@@ -3,6 +3,7 @@
 #pragma once
 // std
 #include <optional>
+#include <list>
 
 // boost
 #include <boost/asio/awaitable.hpp>
