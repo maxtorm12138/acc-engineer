@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.14)
-
 project(acc-engineer LANGUAGES CXX)
+include(FetchContent)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
@@ -16,9 +16,18 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
 find_package(Qt6 REQUIRED COMPONENTS Core Widgets OpenGL REQUIRED)
+
+FetchContent_Declare(
+  spdlog
+  GIT_REPOSITORY https://github.com/gabime/spdlog.git
+  GIT_TAG        v1.11.0
+)
+
+FetchContent_MakeAvailable(spdlog)
+
 find_package(Boost 1.80.0 COMPONENTS program_options REQUIRED)
 find_package(Protobuf REQUIRED)
-find_package(spdlog REQUIRED)
+# find_package(spdlog REQUIRED)
 
 function(generate_proto PROTO_ROOT PROTO_FILE GENERATE_PATH OUT_FILES)
     get_filename_component(PROTO_FILE ${PROTO_FILE} ABSOLUTE)
