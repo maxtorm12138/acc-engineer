@@ -2,19 +2,14 @@ cmake_minimum_required(VERSION 3.14)
 project(acc-engineer LANGUAGES CXX)
 include(FetchContent)
 
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
-
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-set(Protobuf_USE_STATIC_LIBS ON)
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 set(CMAKE_AUTOUIC_SEARCH_PATHS ${CMAKE_AUTOUIC_SEARCH_PATHS} ${PROJECT_SOURCE_DIR}/client/ui ${PROJECT_SOURCE_DIR}/server/ui)
-
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
-
 find_package(Qt6 REQUIRED COMPONENTS Core Widgets OpenGL REQUIRED)
 
 FetchContent_Declare(
@@ -26,8 +21,9 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(spdlog)
 
 find_package(Boost 1.80.0 COMPONENTS program_options REQUIRED)
+
+set(Protobuf_USE_STATIC_LIBS ON)
 find_package(Protobuf REQUIRED)
-# find_package(spdlog REQUIRED)
 
 function(generate_proto PROTO_ROOT PROTO_FILE GENERATE_PATH OUT_FILES)
     get_filename_component(PROTO_FILE ${PROTO_FILE} ABSOLUTE)
