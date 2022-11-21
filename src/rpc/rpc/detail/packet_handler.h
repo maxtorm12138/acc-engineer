@@ -12,6 +12,8 @@
 #include "await_error_code.h"
 #include "error_code.h"
 
+#include <proxy.h>
+
 namespace acc_engineer::rpc::detail {
 namespace net = boost::asio;
 namespace sys = boost::system;

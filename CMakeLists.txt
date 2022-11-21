@@ -18,7 +18,13 @@ FetchContent_Declare(
   GIT_TAG        v1.11.0
 )
 
-FetchContent_MakeAvailable(spdlog)
+FetchContent_Declare(
+    msft_proxy
+    GIT_REPOSITORY https://github.com/microsoft/proxy.git
+    GIT_TAG        1.1.1
+)
+
+FetchContent_MakeAvailable(spdlog msft_proxy)
 
 find_package(Boost 1.80.0 COMPONENTS program_options REQUIRED)
 
@@ -71,6 +77,7 @@ add_library(acc-engineer-rpc ${ACC_ENGINEER_RPC_SRCS})
 target_link_libraries(acc-engineer-rpc PRIVATE Boost::boost)
 target_link_libraries(acc-engineer-rpc PRIVATE protobuf::libprotobuf)
 target_link_libraries(acc-engineer-rpc PRIVATE spdlog::spdlog)
+target_link_libraries(acc-engineer-rpc PRIVATE msft_proxy)
 
 target_include_directories(acc-engineer-rpc PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 target_compile_definitions(acc-engineer-rpc PRIVATE BOOST_ASIO_NO_DEPRECATED)
